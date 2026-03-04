@@ -6,6 +6,8 @@ module RailsVitals
       end
 
       def call(env)
+        RailsVitals::Collector.current = RailsVitals::Collector.new
+
         status, headers, response = @app.call(env)
 
         return [ status, headers, response ] unless injectable?(headers, env)
@@ -16,6 +18,8 @@ module RailsVitals
         headers["Content-Length"] = body.bytesize.to_s
 
         [ status, headers, [ body ] ]
+      ensure
+        RailsVitals::Collector.reset!
       end
 
       private
@@ -48,7 +52,10 @@ module RailsVitals
       def inject_panel(body)
         return body unless body.include?("</body>")
 
-        panel_html = RailsVitals::PanelRenderer.render
+        collector = RailsVitals::Collector.current
+        return body if collector.nil?
+
+        panel_html = RailsVitals::PanelRenderer.render(collector)
         body.sub("</body>", "#{panel_html}</body>")
       end
     end

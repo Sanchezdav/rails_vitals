@@ -10,14 +10,20 @@ module RailsVitals
 
         status, headers, response = @app.call(env)
 
-        return [ status, headers, response ] unless injectable?(headers, env)
+        return [status, headers, response] unless injectable?(headers, env)
+
+        collector = RailsVitals::Collector.current
+        scorer = Scorers::CompositeScorer.new(collector)
+        record = RequestRecord.new(collector: collector, scorer: scorer)
+
+        RailsVitals.store.push(record) if RailsVitals.config.store_enabled
 
         body = extract_body(response)
-        body = inject_panel(body)
+        body = inject_panel(body, collector, scorer)
 
         headers["Content-Length"] = body.bytesize.to_s
 
-        [ status, headers, [ body ] ]
+        [status, headers, [body]]
       ensure
         RailsVitals::Collector.reset!
       end
@@ -49,13 +55,10 @@ module RailsVitals
         body
       end
 
-      def inject_panel(body)
+      def inject_panel(body, collector, scorer)
         return body unless body.include?("</body>")
 
-        collector = RailsVitals::Collector.current
-        return body if collector.nil?
-
-        panel_html = RailsVitals::PanelRenderer.render(collector)
+        panel_html = RailsVitals::PanelRenderer.render(collector, scorer)
         body.sub("</body>", "#{panel_html}</body>")
       end
     end

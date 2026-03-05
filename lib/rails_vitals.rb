@@ -1,6 +1,8 @@
 require "rails_vitals/version"
 require "rails_vitals/configuration"
+require "rails_vitals/store"
 require "rails_vitals/collector"
+require "rails_vitals/request_record"
 require "rails_vitals/notifications/subscriber"
 require "rails_vitals/scorers/base_scorer"
 require "rails_vitals/scorers/query_scorer"
@@ -18,6 +20,10 @@ module RailsVitals
 
     def config
       @config ||= Configuration.new
+    end
+
+    def store
+      @store ||= Store.new(config.store_size)
     end
   end
 end

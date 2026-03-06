@@ -1,0 +1,98 @@
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+  <%= link_to "← Back", rails_vitals.requests_path, style: "color:#a0aec0;font-size:12px;" %>
+  <div class="page-title" style="margin:0;">Request Detail</div>
+</div>
+
+<%# Header %>
+<div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+  <div>
+    <div style="font-size:42px;font-weight:bold;color:<%= score_color(@record.color) %>;">
+      <%= @record.score %>
+      <span style="font-size:16px;color:#a0aec0;">/ 100</span>
+    </div>
+  </div>
+  <div style="text-align:right;">
+    <span class="badge badge-<%= @record.color %>" style="font-size:13px;padding:4px 14px;">
+      <%= @record.label %>
+    </span>
+    <div style="color:#a0aec0;font-size:11px;margin-top:6px;"><%= @record.recorded_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
+  </div>
+</div>
+
+<%# Request Info %>
+<div class="card">
+  <div class="card-title">Request Info</div>
+  <table>
+    <tbody>
+      <tr><td style="color:#a0aec0;width:140px;">Endpoint</td><td><%= @record.endpoint %></td></tr>
+      <tr><td style="color:#a0aec0;">Method</td>  <td><%= @record.http_method %></td></tr>
+      <tr><td style="color:#a0aec0;">Status</td>  <td><%= @record.response_status %></td></tr>
+      <tr><td style="color:#a0aec0;">Duration</td><td><%= @record.duration_ms&.round(1) %>ms</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<%# Query Summary %>
+<div class="card">
+  <div class="card-title">Query Summary</div>
+  <table>
+    <tbody>
+      <tr><td style="color:#a0aec0;width:140px;">Total Queries</td><td><%= @record.total_query_count %></td></tr>
+      <tr><td style="color:#a0aec0;">DB Time</td>     <td><%= @record.total_db_time_ms.round(1) %>ms</td></tr>
+      <tr>
+        <td style="color:#a0aec0;">N+1 Patterns</td>
+        <td>
+          <% if @record.n_plus_one_patterns.any? %>
+            <span class="n1-badge"><%= @record.n_plus_one_patterns.size %> detected</span>
+          <% else %>
+            <span style="color:#68d391;">None detected</span>
+          <% end %>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<%# N+1 Patterns %>
+<% if @record.n_plus_one_patterns.any? %>
+  <div class="card">
+    <div class="card-title">N+1 Patterns</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Query Pattern</th>
+          <th>Repeated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @record.n_plus_one_patterns.each do |pattern, count| %>
+          <tr>
+            <td class="sql"><%= pattern %></td>
+            <td><span class="n1-badge"><%= count %>x</span></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<%# All Queries %>
+<div class="card">
+  <div class="card-title">All Queries (<%= @record.queries.size %>)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>SQL</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @record.queries.sort_by { |q| -q[:duration_ms] }.each do |q| %>
+        <tr>
+          <td class="sql"><%= q[:sql] %></td>
+          <td style="white-space:nowrap;"><%= q[:duration_ms].round(1) %>ms</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

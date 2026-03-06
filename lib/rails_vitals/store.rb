@@ -19,7 +19,7 @@ module RailsVitals
 
     def find(id)
       @mutex.synchronize do
-        @records.find { |r| r[:id] == id }
+        @records.find { |r| r.id == id }
       end
     end
 

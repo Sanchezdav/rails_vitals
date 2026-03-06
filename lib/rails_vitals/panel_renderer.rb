@@ -159,7 +159,8 @@ module RailsVitals
       <<~HTML
         <div style="text-align:right;margin-top:4px;">
           <a href="/rails_vitals/requests/#{record.id}"
-            style="color:#90cdf4;font-size:11px;text-decoration:none;">
+            style="color:#90cdf4;font-size:11px;text-decoration:none;"
+            target="_blank">
             View full report →
           </a>
         </div>

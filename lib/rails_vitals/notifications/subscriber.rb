@@ -11,6 +11,7 @@ module RailsVitals
           next unless RailsVitals.config.enabled
           next if (collector = RailsVitals::Collector.current).nil?
           next if internal_query?(event.payload[:sql])
+          next if rails_vitals_request?
 
           collector.add_query(
             sql:         event.payload[:sql],
@@ -24,6 +25,7 @@ module RailsVitals
         ActiveSupport::Notifications.subscribe("process_action.action_controller") do |event|
           next unless RailsVitals.config.enabled
           next if (collector = RailsVitals::Collector.current).nil?
+          next if event.payload[:controller].to_s.start_with?("RailsVitals::")
 
           collector.finalize!(event)
         end
@@ -40,6 +42,10 @@ module RailsVitals
         sql.include?("information_schema") ||
         sql.include?("pg_namespace") ||
         sql.include?("SHOW search_path")
+      end
+
+      private_class_method def self.rails_vitals_request?
+        Thread.current[:rails_vitals_own_request]
       end
 
       private_class_method def self.extract_source(binds)

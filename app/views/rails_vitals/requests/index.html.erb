@@ -1,0 +1,51 @@
+<div class="page-title">Request History</div>
+
+<div class="filter-bar">
+  <%= link_to "All",        rails_vitals.requests_path,                              class: params[:score].blank? && params[:n_plus_one].blank? ? "active" : "" %>
+  <%= link_to "Critical",   rails_vitals.requests_path(score: "critical"),           class: params[:score] == "critical"   ? "active" : "" %>
+  <%= link_to "Warning",    rails_vitals.requests_path(score: "warning"),            class: params[:score] == "warning"    ? "active" : "" %>
+  <%= link_to "Acceptable", rails_vitals.requests_path(score: "acceptable"),         class: params[:score] == "acceptable" ? "active" : "" %>
+  <%= link_to "Healthy",    rails_vitals.requests_path(score: "healthy"),            class: params[:score] == "healthy"    ? "active" : "" %>
+  <%= link_to "N+1 Only",   rails_vitals.requests_path(n_plus_one: "1"),            class: params[:n_plus_one].present?   ? "active" : "" %>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Endpoint</th>
+        <th>Score</th>
+        <th>Queries</th>
+        <th>DB Time</th>
+        <th>N+1</th>
+        <th>Duration</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @records.each do |r| %>
+        <tr>
+          <td style="color:#a0aec0;font-size:11px;"><%= r.recorded_at.strftime("%H:%M:%S") %></td>
+          <td><%= r.endpoint %></td>
+          <td>
+            <span class="badge badge-<%= r.color %>">
+              <%= r.score %>
+            </span>
+          </td>
+          <td><%= r.total_query_count %></td>
+          <td><%= r.total_db_time_ms.round(1) %>ms</td>
+          <td>
+            <% if r.n_plus_one_patterns.any? %>
+              <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
+            <% else %>
+              <span style="color:#68d391;">—</span>
+            <% end %>
+          </td>
+          <td><%= r.duration_ms&.round(1) %>ms</td>
+          <td><%= link_to "→", rails_vitals.request_path(r.id) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

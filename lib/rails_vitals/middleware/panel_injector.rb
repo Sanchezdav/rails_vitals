@@ -6,6 +6,7 @@ module RailsVitals
       end
 
       def call(env)
+        Thread.current[:rails_vitals_path] = env["PATH_INFO"]
         RailsVitals::Collector.current = RailsVitals::Collector.new
 
         status, headers, response = @app.call(env)
@@ -25,6 +26,7 @@ module RailsVitals
 
         [status, headers, [body]]
       ensure
+        Thread.current[:rails_vitals_own_request] = nil
         RailsVitals::Collector.reset!
       end
 
@@ -33,7 +35,8 @@ module RailsVitals
       def injectable?(headers, env)
         html_response?(headers) &&
           !xhr_request?(env) &&
-          !turbo_frame_request?(env)
+          !turbo_frame_request?(env) &&
+          !rails_vitals_request?(env)
       end
 
       def html_response?(headers)
@@ -49,6 +52,10 @@ module RailsVitals
         env["HTTP_TURBO_FRAME"].present?
       end
 
+      def rails_vitals_request?(env)
+        env["SCRIPT_NAME"].to_s.start_with?("/rails_vitals")
+      end
+
       def extract_body(response)
         body = ""
         response.each { |chunk| body << chunk }
@@ -57,6 +64,8 @@ module RailsVitals
 
       def inject_panel(body, collector, scorer)
         return body unless body.include?("</body>")
+
+        Rails.logger.debug "RailsVitals PATH_INFO: #{Thread.current[:rails_vitals_path]}"
 
         panel_html = RailsVitals::PanelRenderer.render(collector, scorer)
         body.sub("</body>", "#{panel_html}</body>")

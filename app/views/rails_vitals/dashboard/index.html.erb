@@ -1,0 +1,82 @@
+<div class="page-title">Dashboard</div>
+
+<div class="grid-3">
+  <div class="stat-card">
+    <div class="stat-value"><%= @total %></div>
+    <div class="stat-label">Requests Recorded</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= @avg_score %></div>
+    <div class="stat-label">Avg Health Score</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= @avg_queries %></div>
+    <div class="stat-label">Avg Query Count</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Recent Requests</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>Score</th>
+        <th>Queries</th>
+        <th>DB Time</th>
+        <th>N+1</th>
+        <th>Duration</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @records.first(10).each do |r| %>
+        <tr>
+          <td><%= r.endpoint %></td>
+          <td>
+            <span class="badge badge-<%= r.color %>">
+              <%= r.score %> <%= r.label %>
+            </span>
+          </td>
+          <td><%= r.total_query_count %></td>
+          <td><%= r.total_db_time_ms.round(1) %>ms</td>
+          <td>
+            <% if r.n_plus_one_patterns.any? %>
+              <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
+            <% else %>
+              <span style="color:#68d391;">None</span>
+            <% end %>
+          </td>
+          <td><%= r.duration_ms&.round(1) %>ms</td>
+          <td><%= link_to "→", rails_vitals.request_path(r.id) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-title">Top Offenders by Avg Score</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>Hits</th>
+        <th>Avg Score</th>
+        <th>Avg Queries</th>
+        <th>Avg DB Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @top_offenders.each do |endpoint, stats| %>
+        <tr>
+          <td><%= endpoint %></td>
+          <td><%= stats[:count] %></td>
+          <td><%= stats[:avg_score] %></td>
+          <td><%= stats[:avg_queries] %></td>
+          <td><%= stats[:avg_db_time_ms].round(1) %>ms</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

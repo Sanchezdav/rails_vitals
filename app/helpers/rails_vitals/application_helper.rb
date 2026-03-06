@@ -8,5 +8,14 @@ module RailsVitals
       else              "#c53030"
       end
     end
+
+    def score_label_to_color(score)
+      case score
+      when 90..100 then "healthy"
+      when 70..89  then "acceptable"
+      when 50..69  then "warning"
+      else              "critical"
+      end
+    end
   end
 end

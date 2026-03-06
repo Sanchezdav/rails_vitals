@@ -80,3 +80,79 @@
     </tbody>
   </table>
 </div>
+
+<% if @records.any? %>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;">
+
+    <div class="card">
+      <div class="card-title">Score Distribution</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Bracket</th>
+            <th>Count</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @score_distribution.each do |label, count| %>
+            <tr>
+              <td><%= label %></td>
+              <td><%= count %></td>
+              <td style="color:#a0aec0;">
+                <%= @total > 0 ? ((count.to_f / @total) * 100).round(1) : 0 %>%
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Health Trend (last 10 requests)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @health_trend.each do |endpoint, score| %>
+            <tr>
+              <td style="color:#a0aec0;font-size:11px;"><%= endpoint %></td>
+              <td>
+                <span class="badge badge-<%= score_label_to_color(score) %>">
+                  <%= score %>
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Query Volume (last 10 requests)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Request</th>
+            <th>Queries</th>
+            <th>DB Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @query_volume.each do |label, stats| %>
+            <tr>
+              <td style="color:#a0aec0;font-size:11px;"><%= label %></td>
+              <td><%= stats[:queries] %></td>
+              <td style="color:#a0aec0;"><%= stats[:db_time] %>ms</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+<% end %>

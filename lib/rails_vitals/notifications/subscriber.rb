@@ -31,7 +31,15 @@ module RailsVitals
 
       # Skip Rails internal queries — schema lookups, explain, etc.
       private_class_method def self.internal_query?(sql)
-        sql =~ /\A\s*(SCHEMA|EXPLAIN|PRAGMA|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i
+        sql =~ /\A\s*(SCHEMA|EXPLAIN|PRAGMA|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i ||
+        sql.include?("pg_class") ||
+        sql.include?("pg_attribute") ||
+        sql.include?("pg_type") ||
+        sql.include?("t.typname") ||
+        sql.include?("t.oid") ||
+        sql.include?("information_schema") ||
+        sql.include?("pg_namespace") ||
+        sql.include?("SHOW search_path")
       end
 
       private_class_method def self.extract_source(binds)

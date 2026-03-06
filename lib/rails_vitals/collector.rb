@@ -40,7 +40,7 @@ module RailsVitals
       @queries.sum { |q| q[:duration_ms] }
     end
 
-    def slowest_queries(limit = 3)
+    def slowest_queries(limit = 5)
       @queries.sort_by { |q| -q[:duration_ms] }.first(limit)
     end
 

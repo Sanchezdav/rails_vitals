@@ -1,0 +1,117 @@
+<div style="margin-bottom:24px;">
+  <h1 style="font-size:20px;font-weight:bold;color:#e2e8f0;">Per-Model Breakdown</h1>
+  <p style="color:#a0aec0;font-size:13px;margin-top:4px;">
+    Query activity aggregated across <%= @total_requests %> recorded requests
+  </p>
+</div>
+
+<% if @breakdown.any? %>
+  <% @breakdown.each do |row| %>
+    <div class="card" style="margin-bottom:16px;">
+
+      <%# Model header %>
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:16px;
+        padding-bottom:12px;
+        border-bottom:1px solid #2d3748;
+      ">
+        <span style="font-size:16px;font-weight:bold;color:#90cdf4;">
+          <%= row[:model] %>
+        </span>
+        <div style="display:flex;gap:24px;font-size:13px;">
+          <span>
+            <span style="color:#a0aec0;">Queries</span>
+            <span style="color:#e2e8f0;margin-left:6px;font-weight:bold;">
+              <%= row[:query_count] %>
+            </span>
+          </span>
+          <span>
+            <span style="color:#a0aec0;">Total DB Time</span>
+            <span style="color:<%= time_heat_color(row[:total_time_ms]) %>;margin-left:6px;font-weight:bold;">
+              <%= row[:total_time_ms] %>ms
+            </span>
+          </span>
+          <span>
+            <span style="color:#a0aec0;">Avg Query Time</span>
+            <span style="color:<%= time_heat_color(row[:avg_time_ms]) %>;margin-left:6px;font-weight:bold;">
+              <%= row[:avg_time_ms] %>ms
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:<%= row[:callbacks].any? ? '1fr 1fr 1fr' : '1fr 1fr' %>;gap:16px;">
+
+        <%# Endpoints that triggered this model %>
+        <div>
+          <div style="color:#a0aec0;font-size:11px;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">
+            Triggered By
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Queries</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% row[:endpoints].each do |endpoint, count| %>
+                <tr>
+                  <td>
+                    <%= link_to endpoint,
+                          requests_path(endpoint: endpoint),
+                          style: "color:#90cdf4;font-size:12px;" %>
+                  </td>
+                  <td style="color:#a0aec0;"><%= count %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <%# Callback types — only if present %>
+        <% if row[:callbacks].any? %>
+          <div>
+            <div style="color:#a0aec0;font-size:11px;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">
+              Callbacks
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% row[:callbacks].each do |type, count| %>
+                  <tr>
+                    <td>
+                      <span style="
+                        background:<%= callback_color(type) %>;
+                        color:#fff;
+                        padding:1px 6px;
+                        border-radius:3px;
+                        font-size:11px;
+                      ">
+                        <%= type %>
+                      </span>
+                    </td>
+                    <td><%= count %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="card" style="color:#a0aec0;text-align:center;padding:48px;">
+    No data recorded yet. Visit your app to generate data.
+  </div>
+<% end %>

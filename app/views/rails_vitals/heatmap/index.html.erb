@@ -1,0 +1,66 @@
+<div style="margin-bottom:24px;">
+  <h1 style="font-size:20px;font-weight:bold;color:#e2e8f0;">Endpoint Heatmap</h1>
+  <p style="color:#a0aec0;font-size:13px;margin-top:4px;">
+    <%= @total %> requests recorded across <%= @heatmap.size %> endpoints
+  </p>
+</div>
+
+<% if @heatmap.any? %>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Avg Score</th>
+          <th>Hits</th>
+          <th>Avg Queries</th>
+          <th>Avg DB Time</th>
+          <th>Avg Callback Time</th>
+          <th>N+1 Frequency</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @heatmap.each do |row| %>
+          <% color = score_label_to_color(row[:avg_score]) %>
+          <tr>
+            <td style="font-weight:bold;">
+              <%= link_to row[:endpoint],
+                    requests_path(endpoint: row[:endpoint]),
+                    style: "color:#90cdf4;" %>
+            </td>
+            <td>
+              <span class="badge badge-<%= color %>">
+                <%= row[:avg_score] %>
+              </span>
+            </td>
+            <td style="color:#a0aec0;"><%= row[:hits] %></td>
+            <td>
+              <span style="color:<%= query_heat_color(row[:avg_queries]) %>">
+                <%= row[:avg_queries] %>
+              </span>
+            </td>
+            <td>
+              <span style="color:<%= time_heat_color(row[:avg_db_time]) %>">
+                <%= row[:avg_db_time] %>ms
+              </span>
+            </td>
+            <td>
+              <span style="color:<%= time_heat_color(row[:avg_callback_time]) %>">
+                <%= row[:avg_callback_time] %>ms
+              </span>
+            </td>
+            <td>
+              <span style="color:<%= n1_heat_color(row[:n_plus_one_freq]) %>">
+                <%= row[:n_plus_one_freq] %>%
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card" style="color:#a0aec0;text-align:center;padding:48px;">
+    No requests recorded yet. Visit your app to generate data.
+  </div>
+<% end %>

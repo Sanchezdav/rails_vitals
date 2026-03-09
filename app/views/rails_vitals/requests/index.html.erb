@@ -9,6 +9,15 @@
   <%= link_to "N+1 Only",   rails_vitals.requests_path(n_plus_one: "1"),            class: params[:n_plus_one].present?   ? "active" : "" %>
 </div>
 
+<% if params[:endpoint].present? %>
+  <div style="margin:20px 0;font-size:13px;color:#a0aec0;">
+    Filtering by endpoint:
+    <span style="color:#90cdf4;"><%= params[:endpoint] %></span>
+    &nbsp;
+    <%= link_to "✕ Clear", requests_path, style: "color:#fc8181;text-decoration:none;" %>
+  </div>
+<% end %>
+
 <div class="card">
   <table>
     <thead>

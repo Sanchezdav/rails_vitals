@@ -24,6 +24,7 @@ module RailsVitals
 
       def query_fingerprints
         @collector.queries
+          .select { |q| q.is_a?(Hash) && q[:sql].is_a?(String) }
           .map { |q| normalize(q[:sql]) }
           .tally
       end

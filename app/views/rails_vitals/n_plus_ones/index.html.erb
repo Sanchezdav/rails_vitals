@@ -1,0 +1,49 @@
+<div style="margin-bottom:24px;">
+  <h1 style="font-size:20px;font-weight:bold;color:#e2e8f0;">N+1 Patterns</h1>
+  <p style="color:#a0aec0;font-size:13px;margin-top:4px;">
+    Aggregated across <%= @total_requests %> recorded requests
+  </p>
+</div>
+
+<% if @patterns.any? %>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Pattern</th>
+          <th>Occurrences</th>
+          <th>Affected Endpoints</th>
+          <th>Fix</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @patterns.each do |p| %>
+          <tr>
+            <td style="font-family:monospace;font-size:11px;color:#a0aec0;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <%= p[:pattern] %>
+            </td>
+            <td>
+              <span style="color:#fc8181;font-weight:bold;"><%= p[:occurrences] %>x</span>
+            </td>
+            <td style="color:#a0aec0;font-size:12px;">
+              <%= p[:endpoints].keys.join(", ") %>
+            </td>
+            <td style="font-family:monospace;font-size:11px;color:#68d391;">
+              <%= p[:fix_suggestion][:code] %>
+            </td>
+            <td>
+              <%= link_to "Simulate →",
+                    n_plus_one_path(pattern_id(p)),
+                    style: "color:#90cdf4;font-size:12px;" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card" style="color:#a0aec0;text-align:center;padding:48px;">
+    No N+1 patterns detected yet.
+  </div>
+<% end %>

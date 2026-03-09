@@ -96,3 +96,66 @@
     </tbody>
   </table>
 </div>
+
+<%# Callback Map %>
+<% if @record.callbacks.any? %>
+  <div class="card">
+    <div class="card-title">
+      Callback Map
+      <span style="color:#a0aec0;font-weight:normal;margin-left:8px;">
+        <%= @record.callbacks.size %> callbacks —
+        <%= @record.total_callback_time_ms.round(1) %>ms total
+      </span>
+    </div>
+    <% @record.callbacks.group_by { |c| c[:model] }.each do |model, callbacks| %>
+      <div style="margin-bottom:16px;">
+        <div style="
+          color:#90cdf4;
+          font-size:12px;
+          font-weight:bold;
+          margin-bottom:6px;
+          padding-bottom:4px;
+          border-bottom:1px solid #2d3748;
+        ">
+          <%= model %>
+          <span style="color:#a0aec0;font-weight:normal;">
+            (<%= callbacks.size %> callbacks,
+            <%= callbacks.sum { |c| c[:duration_ms] }.round(1) %>ms)
+          </span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Callback</th>
+              <th>Time</th>
+              <th>% of Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% callbacks.sort_by { |c| -c[:duration_ms] }.each do |cb| %>
+              <tr>
+                <td>
+                  <span style="
+                    background:<%= callback_color(cb[:kind]) %>;
+                    color:#fff;
+                    padding:1px 6px;
+                    border-radius:3px;
+                    font-size:11px;
+                  ">
+                    <%= cb[:kind] %>
+                  </span>
+                </td>
+                <td><%= cb[:duration_ms] %>ms</td>
+                <td style="color:#a0aec0;">
+                  <% pct = @record.total_callback_time_ms > 0 ?
+                    ((cb[:duration_ms] / @record.total_callback_time_ms) * 100).round(1) : 0 %>
+                  <%= pct %>%
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+<% end %>

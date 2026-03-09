@@ -3,7 +3,7 @@ module RailsVitals
     attr_reader :id, :controller, :action, :http_method,
                 :response_status, :duration_ms, :score,
                 :label, :color, :queries, :n_plus_one_patterns,
-                :recorded_at
+                :callbacks, :total_callback_time_ms, :recorded_at
 
     def initialize(collector:, scorer:)
       @id                  = SecureRandom.hex(8)
@@ -13,6 +13,8 @@ module RailsVitals
       @response_status     = collector.response_status
       @duration_ms         = collector.duration_ms
       @queries             = collector.queries
+      @callbacks           = collector.callbacks
+      @total_callback_time_ms = collector.total_callback_time_ms
       @score               = scorer.score
       @label               = scorer.label
       @color               = scorer.color

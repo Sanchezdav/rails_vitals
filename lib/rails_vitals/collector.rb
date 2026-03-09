@@ -1,10 +1,11 @@
 module RailsVitals
   class Collector
-    attr_reader :queries, :controller, :action, :http_method,
+    attr_reader :queries, :callbacks, :controller, :action, :http_method,
                 :response_status, :duration_ms, :started_at
 
     def initialize
       @queries        = []
+      @callbacks      = []
       @controller     = nil
       @action         = nil
       @http_method    = nil
@@ -19,6 +20,15 @@ module RailsVitals
         sql:         sql,
         duration_ms: duration_ms,
         source:      source,
+        called_at:   Time.now
+      }
+    end
+
+    def add_callback(model:, kind:, duration_ms:)
+      @callbacks << {
+        model:       model,
+        kind:        kind,
+        duration_ms: duration_ms,
         called_at:   Time.now
       }
     end
@@ -42,6 +52,14 @@ module RailsVitals
 
     def slowest_queries(limit = 5)
       @queries.sort_by { |q| -q[:duration_ms] }.first(limit)
+    end
+
+    def total_callback_time_ms
+      @callbacks.sum { |c| c[:duration_ms] }
+    end
+
+    def callbacks_by_model
+      @callbacks.group_by { |c| c[:model] }
     end
 
     # Thread-local storage accessors

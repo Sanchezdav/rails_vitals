@@ -41,7 +41,8 @@ module RailsVitals
         sql.include?("t.oid") ||
         sql.include?("information_schema") ||
         sql.include?("pg_namespace") ||
-        sql.include?("SHOW search_path")
+        sql.include?("SHOW search_path") ||
+        sql.include?("SHOW max_identifier_length")
       end
 
       private_class_method def self.rails_vitals_request?

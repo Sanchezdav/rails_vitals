@@ -13,5 +13,13 @@ module RailsVitals
         RailsVitals::Notifications::Subscriber.attach
       end
     end
+
+    config.to_prepare do
+      if RailsVitals.config.enabled
+        ActiveRecord::Base.prepend(
+          RailsVitals::Instrumentation::CallbackInstrumentation
+        )
+      end
+    end
   end
 end

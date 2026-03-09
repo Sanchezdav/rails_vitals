@@ -17,5 +17,16 @@ module RailsVitals
       else              "critical"
       end
     end
+
+    def callback_color(kind)
+      case kind.to_sym
+      when :validation, :save   then "#2b6cb0"
+      when :create, :update     then "#276749"
+      when :destroy             then "#c53030"
+      when :commit              then "#b7791f"
+      when :rollback            then "#742a2a"
+      else                           "#4a5568"
+      end
+    end
   end
 end

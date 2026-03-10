@@ -11,7 +11,7 @@ module RailsVitals
 
         status, headers, response = @app.call(env)
 
-        return [status, headers, response] unless injectable?(headers, env)
+        return [ status, headers, response ] unless injectable?(headers, env)
 
         collector = RailsVitals::Collector.current
         scorer = Scorers::CompositeScorer.new(collector)
@@ -24,7 +24,7 @@ module RailsVitals
 
         headers["Content-Length"] = body.bytesize.to_s
 
-        [status, headers, [body]]
+        [ status, headers, [ body ] ]
       ensure
         Thread.current[:rails_vitals_own_request] = nil
         RailsVitals::Collector.reset!

@@ -74,6 +74,15 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.08em;
   color: #a0aec0;
   margin-bottom: 12px;
+
+  .card-title-description {
+    font-size: 10px;
+    color: #718096;
+    text-transform: none;
+    letter-spacing: normal;
+    margin-left: 8px;
+    font-weight: normal;
+  }
 }
 
 .badge {

@@ -8,6 +8,13 @@ module RailsVitals
     def show
       @record = RailsVitals.store.find(params[:id])
       render plain: "Request not found", status: :not_found unless @record
+
+      @query_dna = @record.queries.map do |q|
+        {
+          query: q,
+          dna: Analyzers::SqlTokenizer.tokenize(q[:sql], all_queries: @record.queries)
+        }
+      end
     end
 
     private

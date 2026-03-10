@@ -78,8 +78,17 @@
 
 <%# All Queries %>
 <div class="card">
-  <div class="card-title">All Queries (<%= @record.queries.size %>)</div>
-  <table>
+  <div
+    class="card-title"
+    onclick="toggleCard('all_queries_table', 'all_queries_chevron_simple')"
+    style="cursor:pointer;"
+  >
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span>All Queries (<%= @record.queries.size %>)</span>
+      <span style="font-size:14px;" id="all_queries_chevron_simple">▼</span>
+    </div>
+  </div>
+  <table id="all_queries_table">
     <thead>
       <tr>
         <th>SQL</th>
@@ -159,3 +168,229 @@
     <% end %>
   </div>
 <% end %>
+
+<%# All Queries with DNA %>
+<div class="card">
+  <div
+    class="card-title"
+    onclick="toggleCard('all_queries_table_dna', 'all_queries_chevron_dna')"
+    style="cursor:pointer;"
+  >
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <p>
+        All Queries (<%= @record.queries.size %>)
+        <span class="card-title-description">
+          click any query to expand DNA
+        </span>
+      </p>
+      <span style="font-size:14px;" id="all_queries_chevron_dna">▼</span>
+    </div>
+  </div>
+  <table id="all_queries_table_dna">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>SQL</th>
+        <th>Time</th>
+        <th>Complexity</th>
+        <th>Risk</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @query_dna.each_with_index do |item, i| %>
+        <% q   = item[:query] %>
+        <% dna = item[:dna] %>
+        <% dna_id = "dna_#{i}" %>
+
+        <%# Query row — clickable %>
+        <tr
+          onclick="toggleDna('<%= dna_id %>')"
+          style="cursor:pointer;"
+        >
+          <td style="color:#a0aec0;"><%= i + 1 %></td>
+          <td style="font-family:monospace;font-size:11px;color:#e2e8f0;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <%= q[:sql] %>
+          </td>
+          <td style="color:<%= time_heat_color(q[:duration_ms]) %>;">
+            <%= q[:duration_ms].round(2) %>ms
+          </td>
+          <td>
+            <span style="color:<%= dna.complexity_label[:color] %>;font-size:12px;">
+              <%= dna.complexity_label[:label] %>
+              <span style="color:#a0aec0;font-size:10px;">(<%= dna.complexity %>/10)</span>
+            </span>
+          </td>
+          <td>
+            <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
+            <span style="color:<%= risk_colors[dna.risk] %>;font-size:12px;text-transform:capitalize;">
+              <%= dna.risk %>
+            </span>
+          </td>
+        </tr>
+
+        <%# DNA panel — hidden by default %>
+        <tr id="<%= dna_id %>" style="display:none;">
+          <td colspan="5" style="padding:0;">
+            <div style="
+              background:#1a202c;
+              border-left:3px solid #4299e1;
+              padding:16px;
+              margin:4px 0;
+            ">
+
+              <%# Full SQL %>
+              <div style="margin-bottom:16px;">
+                <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
+                  Full SQL
+                </div>
+                <pre style="color:#e2e8f0;font-size:11px;white-space:pre-wrap;word-break:break-all;margin:0;"><%= q[:sql] %></pre>
+              </div>
+
+              <%# Token strip %>
+              <div style="margin-bottom:16px;">
+                <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
+                  Query DNA
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <% dna.tokens.each do |token| %>
+                    <span
+                      onclick="toggleCard('<%= "card_#{dna_id}_#{token[:type]}" %>'); event.stopPropagation();"
+                      style="
+                        background:<%= token[:color] %>22;
+                        color:<%= token[:color] %>;
+                        border:1px solid <%= token[:color] %>66;
+                        padding:3px 10px;
+                        border-radius:4px;
+                        font-size:12px;
+                        font-family:monospace;
+                        cursor:pointer;
+                      "
+                    >
+                      <%= token[:label] %>
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+
+              <%# Repetition bar %>
+              <% if dna.repetition_bar.is_a?(Hash) && dna.repetition_count > 1 %>
+                <div style="margin-bottom:16px;">
+                  <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
+                    Repetition — <%= dna.repetition_count %>x in this request
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-family:monospace;font-size:13px;">
+                      <span style="color:#fc8181;">
+                        <%= "█" * dna.repetition_bar[:filled] %>
+                      </span>
+                      <span style="color:#2d3748;">
+                        <%= "█" * dna.repetition_bar[:empty] %>
+                      </span>
+                    </div>
+                    <span style="color:#fc8181;font-size:12px;font-weight:bold;">
+                      <%= dna.repetition_count %>x — N+1 pattern
+                    </span>
+                  </div>
+                </div>
+              <% end %>
+
+              <%# Complexity + metadata row %>
+              <div style="display:flex;gap:24px;margin-bottom:16px;font-size:12px;">
+                <div>
+                  <span style="color:#a0aec0;">Complexity</span>
+                  <span style="color:<%= dna.complexity_label[:color] %>;margin-left:6px;font-weight:bold;">
+                    <%= dna.complexity_label[:label] %> (<%= dna.complexity %>/10)
+                  </span>
+                </div>
+                <div>
+                  <span style="color:#a0aec0;">Risk</span>
+                  <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
+                  <span style="color:<%= risk_colors[dna.risk] %>;margin-left:6px;font-weight:bold;text-transform:capitalize;">
+                    <%= dna.risk %>
+                  </span>
+                </div>
+                <div>
+                  <span style="color:#a0aec0;">Duration</span>
+                  <span style="color:<%= time_heat_color(q[:duration_ms]) %>;margin-left:6px;font-weight:bold;">
+                    <%= q[:duration_ms].round(2) %>ms
+                  </span>
+                </div>
+              </div>
+
+              <%# Education cards — one per token, hidden by default %>
+              <% dna.tokens.each do |token| %>
+                <div
+                  id="card_<%= dna_id %>_<%= token[:type] %>"
+                  style="display:none;margin-bottom:8px;"
+                >
+                  <div style="
+                    background:#2d3748;
+                    border-left:3px solid <%= token[:color] %>;
+                    border-radius:4px;
+                    padding:12px 16px;
+                  ">
+                    <div style="
+                      color:<%= token[:color] %>;
+                      font-size:12px;
+                      font-weight:bold;
+                      font-family:monospace;
+                      margin-bottom:6px;
+                    ">
+                      💡 <%= token[:label] %>
+                      <span style="
+                        background:<%= token[:color] %>33;
+                        color:<%= token[:color] %>;
+                        font-size:10px;
+                        padding:1px 6px;
+                        border-radius:3px;
+                        margin-left:6px;
+                        text-transform:uppercase;
+                        font-family:Arial,sans-serif;
+                      ">
+                        <%= token[:risk] %>
+                      </span>
+                    </div>
+                    <div style="color:#e2e8f0;font-size:13px;line-height:1.6;">
+                      <%= token[:explanation] %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+
+            </div>
+          </td>
+        </tr>
+
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%# Inline JS for toggle behavior %>
+<script>
+  function toggleDna(id) {
+    var row = document.getElementById(id);
+    if (row) {
+      row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    }
+  }
+
+  function toggleCard(id, chevronId) {
+    var card = document.getElementById(id);
+    if (card) {
+      if (card.style.display === 'none') {
+        card.style.display = card.tagName === 'TABLE' ? 'table' : 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    }
+
+    // Toggle chevron icon if provided
+    if (chevronId) {
+      var chevron = document.getElementById(chevronId);
+      if (chevron) {
+        chevron.textContent = chevron.textContent === '▼' ? '▶' : '▼';
+      }
+    }
+  }
+</script>

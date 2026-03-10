@@ -1,0 +1,370 @@
+<div style="display:flex;gap:0;height:calc(100vh - 60px);">
+
+  <%# Left — SVG diagram %>
+  <div style="flex:1;overflow:auto;padding:24px;background:#1a202c;">
+
+    <div class="card-title" style="margin-bottom:20px;">
+      Association Map
+      <span class="card-title-description">
+        click any node to inspect
+      </span>
+    </div>
+
+    <%# Legend %>
+    <div style="display:flex;gap:20px;margin-bottom:20px;font-size:12px;flex-wrap:wrap;">
+      <span>
+        <span style="display:inline-block;width:12px;height:12px;background:#68d391;border-radius:2px;margin-right:4px;"></span>
+        Healthy
+      </span>
+      <span>
+        <span style="display:inline-block;width:12px;height:12px;background:#fc8181;border-radius:2px;margin-right:4px;"></span>
+        N+1 Detected
+      </span>
+      <span>
+        <span style="display:inline-block;width:12px;height:12px;background:#4a5568;border-radius:2px;margin-right:4px;"></span>
+        Not Queried
+      </span>
+      <span style="color:#a0aec0;">——</span>
+      <span style="color:#f6ad55;">has_many / has_one</span>
+      <span style="color:#a0aec0;">——</span>
+      <span style="color:#9f7aea;">belongs_to</span>
+      <span style="color:#a0aec0;margin-left:8px;">⚠ missing index on FK</span>
+    </div>
+
+    <svg
+      id="assoc-map"
+      width="900"
+      height="<%= @canvas_height %>"
+      style="display:block;"
+    >
+      <defs>
+        <%# Arrowhead markers %>
+        <marker id="arrow-hasmany" markerWidth="8" markerHeight="8"
+                refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f6ad55" opacity="0.7"/>
+        </marker>
+        <marker id="arrow-belongsto" markerWidth="8" markerHeight="8"
+                refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#9f7aea" opacity="0.7"/>
+        </marker>
+        <marker id="arrow-n1" markerWidth="8" markerHeight="8"
+                refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#fc8181" opacity="0.9"/>
+        </marker>
+      </defs>
+
+      <%# Draw edges first (behind nodes) %>
+      <% @nodes.each do |node| %>
+        <% node.associations.each do |edge| %>
+          <% target = @node_map[edge.to_model] %>
+          <% next unless target&.position && node.position %>
+          <% x1 = node.position[:x] %>
+          <% y1 = node.position[:y] %>
+          <% x2 = target.position[:x] %>
+          <% y2 = target.position[:y] %>
+
+          <%# Edge color and marker %>
+          <% if edge.has_n1 %>
+            <% stroke = "#fc8181"; marker = "arrow-n1" %>
+          <% elsif edge.macro == :belongs_to %>
+            <% stroke = "#9f7aea44"; marker = "arrow-belongsto" %>
+          <% else %>
+            <% stroke = "#f6ad5544"; marker = "arrow-hasmany" %>
+          <% end %>
+
+          <line
+            x1="<%= x1 %>" y1="<%= y1 %>"
+            x2="<%= x2 %>" y2="<%= y2 %>"
+            stroke="<%= stroke %>"
+            stroke-width="<%= edge.has_n1 ? 2 : 1.5 %>"
+            stroke-dasharray="<%= edge.indexed ? 'none' : '4,3' %>"
+            marker-end="url(#<%= marker %>)"
+          />
+
+          <%# FK label on edge midpoint %>
+          <% mid_x = (x1 + x2) / 2 %>
+          <% mid_y = (y1 + y2) / 2 %>
+          <text
+            x="<%= mid_x %>" y="<%= mid_y - 4 %>"
+            font-size="9"
+            fill="<%= edge.indexed ? '#718096' : '#f6ad55' %>"
+            text-anchor="middle"
+            font-family="monospace"
+          >
+            <%= edge.foreign_key %>
+            <%= "⚠" unless edge.indexed %>
+          </text>
+        <% end %>
+      <% end %>
+
+      <%# Draw nodes %>
+      <% @nodes.each do |node| %>
+        <% next unless node.position %>
+        <% x = node.position[:x] %>
+        <% y = node.position[:y] %>
+
+        <%# Node color %>
+        <% if node.has_n1 %>
+          <% fill = "#2d1515"; stroke = "#fc8181" %>
+        <% elsif node.query_count > 0 %>
+          <% fill = "#1a2d1a"; stroke = "#68d391" %>
+        <% else %>
+          <% fill = "#2d3748"; stroke = "#4a5568" %>
+        <% end %>
+
+        <%# Clickable group %>
+        <g
+          onclick="selectNode('<%= node.name.to_json %>')"
+          style="cursor:pointer;"
+          id="node-<%= node.name %>"
+        >
+          <%# Node box %>
+          <rect
+            x="<%= x - 54 %>" y="<%= y - 28 %>"
+            width="108" height="56"
+            rx="6"
+            fill="<%= fill %>"
+            stroke="<%= stroke %>"
+            stroke-width="1.5"
+          />
+
+          <%# Model name %>
+          <text
+            x="<%= x %>" y="<%= y - 8 %>"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="bold"
+            font-family="Arial, sans-serif"
+            fill="<%= node.has_n1 ? '#fc8181' : '#e2e8f0' %>"
+          >
+            <%= node.name %>
+          </text>
+
+          <%# Query count %>
+          <text
+            x="<%= x %>" y="<%= y + 8 %>"
+            text-anchor="middle"
+            font-size="10"
+            font-family="monospace"
+            fill="#a0aec0"
+          >
+            <%= node.query_count %> queries
+          </text>
+
+          <%# Avg time %>
+          <text
+            x="<%= x %>" y="<%= y + 20 %>"
+            text-anchor="middle"
+            font-size="10"
+            font-family="monospace"
+            fill="<%= node.avg_query_time_ms > 10 ? '#f6ad55' : '#718096' %>"
+          >
+            avg <%= node.avg_query_time_ms %>ms
+          </text>
+
+          <%# N+1 badge %>
+          <% if node.has_n1 %>
+            <circle cx="<%= x + 50 %>" cy="<%= y - 24 %>" r="7" fill="#fc8181"/>
+            <text x="<%= x + 50 %>" y="<%= y - 20 %>"
+                  text-anchor="middle" font-size="9"
+                  font-weight="bold" fill="#1a202c">N+1</text>
+          <% end %>
+        </g>
+      <% end %>
+    </svg>
+  </div>
+
+  <%# Right — slide-in detail panel %>
+  <div
+    id="assoc-panel"
+    style="
+      width:0;
+      overflow:hidden;
+      background:#2d3748;
+      border-left:1px solid #4a5568;
+      transition:width 0.2s ease;
+      flex-shrink:0;
+    "
+  >
+    <div id="assoc-panel-inner" style="width:320px;padding:20px;display:none;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span id="panel-model-name"
+              style="font-size:16px;font-weight:bold;color:#e2e8f0;font-family:monospace;">
+        </span>
+        <button
+          onclick="closePanel()"
+          style="background:none;border:none;color:#a0aec0;font-size:18px;cursor:pointer;padding:0;"
+        >✕</button>
+      </div>
+
+      <%# Stats row %>
+      <div style="display:flex;gap:12px;margin-bottom:20px;">
+        <div style="flex:1;background:#1a202c;border-radius:4px;padding:10px;text-align:center;">
+          <div id="panel-query-count"
+               style="font-size:20px;font-weight:bold;color:#4299e1;font-family:monospace;">
+          </div>
+          <div style="font-size:10px;color:#a0aec0;margin-top:2px;">queries</div>
+        </div>
+        <div style="flex:1;background:#1a202c;border-radius:4px;padding:10px;text-align:center;">
+          <div id="panel-avg-time"
+               style="font-size:20px;font-weight:bold;color:#68d391;font-family:monospace;">
+          </div>
+          <div style="font-size:10px;color:#a0aec0;margin-top:2px;">avg ms</div>
+        </div>
+        <div style="flex:1;background:#1a202c;border-radius:4px;padding:10px;text-align:center;">
+          <div id="panel-n1-count"
+               style="font-size:20px;font-weight:bold;font-family:monospace;">
+          </div>
+          <div style="font-size:10px;color:#a0aec0;margin-top:2px;">N+1 patterns</div>
+        </div>
+      </div>
+
+      <%# Associations list %>
+      <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;
+                  letter-spacing:0.05em;margin-bottom:8px;">
+        Associations
+      </div>
+      <div id="panel-associations" style="margin-bottom:20px;"></div>
+
+      <%# N+1 patterns %>
+      <div id="panel-n1-section" style="display:none;">
+        <div style="color:#fc8181;font-size:10px;text-transform:uppercase;
+                    letter-spacing:0.05em;margin-bottom:8px;">
+          N+1 Patterns
+        </div>
+        <div id="panel-n1-list" style="margin-bottom:20px;"></div>
+      </div>
+
+      <%# Action links %>
+      <div id="panel-links" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+    </div>
+  </div>
+</div>
+
+<%# Node data for JS — embedded as JSON %>
+<script>
+  var NODE_DATA = <%= raw @nodes.map { |n| [
+    n.name,
+    {
+      name:              n.name,
+      table:             n.table,
+      query_count:       n.query_count,
+      avg_query_time_ms: n.avg_query_time_ms,
+      has_n1:            n.has_n1,
+      n1_patterns:       n.n1_patterns.map { |p| {
+        pattern:        p[:pattern],
+        occurrences:    p[:occurrences],
+        fix_suggestion: p[:fix_suggestion]&.dig(:code)
+      }},
+      associations: n.associations.map { |e| {
+        to_model:    e.to_model,
+        macro:       e.macro,
+        foreign_key: e.foreign_key,
+        indexed:     e.indexed,
+        has_n1:      e.has_n1
+      }}
+    }
+  ] }.to_h.to_json %>;
+
+  var N1_PATH     = "<%= rails_vitals.n_plus_ones_path %>";
+  var REQUEST_PATH = "<%= rails_vitals.requests_path %>";
+
+  function selectNode(nameJson) {
+    var name = JSON.parse(nameJson);
+    var node = NODE_DATA[name];
+    if (!node) return;
+
+    // Highlight selected node
+    document.querySelectorAll('[id^="node-"]').forEach(function(el) {
+      el.style.opacity = '0.4';
+    });
+    var el = document.getElementById('node-' + name);
+    if (el) el.style.opacity = '1';
+
+    // Populate panel
+    document.getElementById('panel-model-name').textContent = node.name;
+    document.getElementById('panel-query-count').textContent = node.query_count;
+    document.getElementById('panel-avg-time').textContent = node.avg_query_time_ms;
+
+    var n1Count = node.n1_patterns.length;
+    var n1El = document.getElementById('panel-n1-count');
+    n1El.textContent = n1Count;
+    n1El.style.color = n1Count > 0 ? '#fc8181' : '#68d391';
+
+    // Associations list
+    var assocHtml = '';
+    node.associations.forEach(function(a) {
+      var macroColor = a.macro === 'belongs_to' ? '#9f7aea' : '#f6ad55';
+      var n1Badge    = a.has_n1
+        ? '<span style="background:#fc818133;color:#fc8181;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">N+1</span>'
+        : '';
+      var indexBadge = a.indexed
+        ? '<span style="background:#68d39133;color:#68d391;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">indexed</span>'
+        : '<span style="background:#f6ad5533;color:#f6ad55;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">⚠ no index</span>';
+
+      assocHtml +=
+        '<div style="padding:8px;background:#1a202c;border-radius:4px;margin-bottom:6px;font-size:12px;">' +
+          '<span style="color:' + macroColor + ';font-family:monospace;">' + a.macro + '</span>' +
+          ' <span style="color:#e2e8f0;font-family:monospace;">:' + a.to_model.toLowerCase() + '</span>' +
+          n1Badge +
+          '<div style="color:#718096;font-size:10px;margin-top:4px;font-family:monospace;">' +
+            'fk: ' + a.foreign_key + indexBadge +
+          '</div>' +
+        '</div>';
+    });
+    document.getElementById('panel-associations').innerHTML =
+      assocHtml || '<div style="color:#718096;font-size:12px;">No associations</div>';
+
+    // N+1 section
+    var n1Section = document.getElementById('panel-n1-section');
+    if (n1Count > 0) {
+      n1Section.style.display = 'block';
+      var n1Html = '';
+      node.n1_patterns.forEach(function(p) {
+        n1Html +=
+          '<div style="padding:8px;background:#2d1515;border:1px solid #fc818144;' +
+                      'border-radius:4px;margin-bottom:6px;font-size:11px;">' +
+            '<div style="color:#fc8181;font-family:monospace;margin-bottom:4px;">' +
+              p.occurrences + 'x detected' +
+            '</div>' +
+            (p.fix_suggestion
+              ? '<div style="color:#68d391;font-family:monospace;">Fix: ' + p.fix_suggestion + '</div>'
+              : '') +
+          '</div>';
+      });
+      document.getElementById('panel-n1-list').innerHTML = n1Html;
+    } else {
+      n1Section.style.display = 'none';
+    }
+
+    // Action links
+    var linksHtml = ""
+
+    if (n1Count > 0) {
+      linksHtml +=
+        '<a href="' + N1_PATH + '" ' +
+           'style="display:block;background:#2d1515;border:1px solid #fc818166;' +
+                  'color:#fc8181;padding:8px 12px;border-radius:4px;font-size:12px;' +
+                  'text-decoration:none;text-align:center;margin-top:8px;">' +
+          'View N+1 patterns →' +
+        '</a>';
+    }
+    document.getElementById('panel-links').innerHTML = linksHtml;
+
+    // Open panel
+    var panel = document.getElementById('assoc-panel');
+    var inner = document.getElementById('assoc-panel-inner');
+    panel.style.width = '320px';
+    inner.style.display = 'block';
+  }
+
+  function closePanel() {
+    document.getElementById('assoc-panel').style.width = '0';
+    document.getElementById('assoc-panel-inner').style.display = 'none';
+    document.querySelectorAll('[id^="node-"]').forEach(function(el) {
+      el.style.opacity = '1';
+    });
+  }
+</script>

@@ -7,7 +7,7 @@ module RailsVitals
 
     def show
       @record = RailsVitals.store.find(params[:id])
-      render plain: "Request not found", status: :not_found unless @record
+      return render plain: "Request not found", status: :not_found unless @record
 
       @query_dna = @record.queries.map do |q|
         {

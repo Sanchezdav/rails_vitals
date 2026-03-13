@@ -15,12 +15,14 @@ Gem::Specification.new do |spec|
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/Sanchezdav/rails_vitals"
+  spec.metadata["source_code_uri"] = "https://github.com/Sanchezdav/rails_vitals/tree/main"
   spec.metadata["changelog_uri"] = "https://github.com/Sanchezdav/rails_vitals/CHANGELOG.md"
+
+  spec.required_ruby_version = ">= 3.0.0"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
 
-  spec.add_dependency "rails", ">= 8.1.2"
+  spec.add_dependency "rails", "~> 8.1", ">= 8.1.2"
 end

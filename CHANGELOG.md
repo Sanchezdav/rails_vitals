@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] — 2026-03-13
+
+### Added
+
+#### Support for Rails 7+
+- Modify the gemspec to support Rails 7+ apps
+
+---
+
 ## [0.2.0] — 2026-03-13
 
 ### Added

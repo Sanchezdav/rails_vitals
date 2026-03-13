@@ -30,20 +30,20 @@ a:hover { text-decoration: underline; }
 .nav {
   background: #1a1a2e;
   border-bottom: 1px solid #2d3748;
-  padding: 12px 24px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   gap: 24px;
 }
 
 .nav-brand {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: bold;
   color: #90cdf4;
   margin-right: 16px;
 }
 
-.nav a {
+.nav a.nav-link {
   color: #a0aec0;
   font-size: 12px;
 }

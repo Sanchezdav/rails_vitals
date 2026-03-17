@@ -1,0 +1,260 @@
+<style>
+  .plan-node {
+    border-left: 2px solid #4a5568;
+    margin-left: 16px;
+    padding-left: 16px;
+    margin-top: 8px;
+  }
+  .plan-node:first-child {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
+  .node-box {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .node-box:hover { opacity: 0.85; }
+</style>
+
+<%# Header %>
+<div style="margin-bottom:20px;">
+  <% if @record %>
+    <a
+      href="<%= rails_vitals.request_path(@record.id) %>"
+      style="color:#4299e1;font-size:13px;"
+    >
+      ← Back to Request Detail
+    </a>
+  <% end %>
+
+  <h2 style="margin:8px 0 4px;color:#e2e8f0;font-size:20px;">
+    EXPLAIN Visualizer
+  </h2>
+
+  <div
+    style="font-family:monospace;font-size:11px;color:#718096;
+              word-break:break-all;"
+  >
+    <%= @sql %>
+  </div>
+</div>
+
+<% if @result.error %>
+  <div
+    style="background:#2d1515;border:1px solid #fc818166;border-radius:6px;
+              padding:16px;color:#fc8181;font-size:13px;"
+  >
+    <%= @result.error %>
+  </div>
+<% else %>
+  <%# Summary stats row %>
+  <div
+    style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;"
+  >
+    <% stats = [
+        { label: "Total Cost", value: @result.total_cost,     color: cost_color(@result.total_cost) },
+        { label: "Actual Time", value: "#{@result.actual_time_ms}ms", color: time_color(@result.actual_time_ms) },
+        { label: "Rows Examined", value: @result.rows_examined,  color: rows_color(@result.rows_examined) },
+        { label: "Warnings", value: @result.warnings.size,  color: @result.warnings.any? ? "#fc8181" : "#68d391" },
+        { label: "Row Width", value: "#{@result.plan&.plan_width}B", color: @result.plan&.plan_width.to_i > 200 ? "#f6ad55" : "#68d391" }
+      ] %>
+
+    <% stats.each do |s| %>
+      <div
+        style="background:#2d3748;border-radius:6px;padding:16px;text-align:center;"
+      >
+        <div
+          style="font-size:24px;font-weight:bold;font-family:monospace;
+                    color:<%= s[:color] %>;"
+        >
+          <%= s[:value] %>
+        </div>
+
+        <div style="color:#a0aec0;font-size:11px;margin-top:4px;">
+          <%= s[:label] %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <%# Warnings %>
+  <% if @result.warnings.any? %>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title" style="color:#fc8181;">
+        ⚠ Warnings (<%= @result.warnings.size %>)
+      </div>
+
+      <% @result.warnings.each do |w| %>
+        <% severity_color = w[:severity] == :danger ? "#fc8181" : "#f6ad55" %>
+
+        <div
+          style="background:#1a202c;border-left:3px solid <%= severity_color %>;
+                    border-radius:4px;padding:12px 16px;margin-bottom:8px;font-size:13px;"
+        >
+          <% case w[:type] %>
+          <% when :sequential_scan %>
+            <div
+              style="color:<%= severity_color %>;font-weight:bold;margin-bottom:4px;"
+            >
+              Sequential Scan on
+              <span style="font-family:monospace;"><%= w[:table] %></span>
+            </div>
+            <div style="color:#a0aec0;">
+              Scanned
+              <%= (w[:rows].to_i + w[:removed].to_i).to_s %>
+              rows, returned
+              <%= w[:rows] %>
+              , removed
+              <%= w[:removed] || 0 %>
+              by filter.
+              <% if w[:filter] %>
+                <span
+                  style="font-family:monospace;color:#718096;font-size:11px;"
+                >
+                  Filter: <%= w[:filter] %>
+                </span>
+              <% end %>
+            </div>
+          <% when :sort_without_index %>
+            <div
+              style="color:<%= severity_color %>;font-weight:bold;margin-bottom:4px;"
+            >
+              Sort without index
+            </div>
+            <div style="color:#a0aec0;">
+              PostgreSQL sorted rows in memory — ORDER BY column may lack an
+              index.
+            </div>
+          <% when :large_nested_loop %>
+            <div
+              style="color:<%= severity_color %>;font-weight:bold;margin-bottom:4px;"
+            >
+              Large Nested Loop (<%= w[:rows] %> rows)
+            </div>
+            <div style="color:#a0aec0;">
+              Nested Loop processed a large number of rows. Verify join columns
+              are indexed.
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <%# Fix suggestions %>
+  <% if @result.suggestions.any? %>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title" style="color:#68d391;">
+        💡 Fix Suggestions
+      </div>
+
+      <% @result.suggestions.each do |s| %>
+        <% s_color = s[:severity] == :danger ? "#fc8181" : "#f6ad55" %>
+
+        <div
+          style="background:#1a202c;border-radius:6px;padding:16px;
+                    margin-bottom:12px;"
+        >
+          <div
+            style="color:<%= s_color %>;font-weight:bold;
+                      font-size:13px;margin-bottom:8px;"
+          >
+            <%= s[:title] %>
+          </div>
+
+          <div
+            style="color:#a0aec0;font-size:13px;margin-bottom:12px;
+                      line-height:1.6;"
+          >
+            <%= s[:body] %>
+          </div>
+
+          <% if s[:migration] %>
+            <div style="margin-bottom:6px;">
+              <div
+                style="color:#718096;font-size:10px;text-transform:uppercase;
+                          letter-spacing:0.05em;margin-bottom:4px;"
+              >
+                Migration
+              </div>
+
+              <div
+                style="background:#2d3748;border-radius:4px;padding:8px 12px;
+                          font-family:monospace;font-size:12px;color:#68d391;"
+              >
+                <%= s[:migration] %>
+              </div>
+            </div>
+          <% end %>
+
+          <% if s[:command] %>
+            <div>
+              <div
+                style="color:#718096;font-size:10px;text-transform:uppercase;
+                          letter-spacing:0.05em;margin-bottom:4px;"
+              >
+                Generate
+              </div>
+
+              <div
+                style="background:#2d3748;border-radius:4px;padding:8px 12px;
+                          font-family:monospace;font-size:12px;color:#4299e1;"
+              >
+                $ <%= s[:command] %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Interpretation summary %>
+  <% if @result.interpretation %>
+    <div
+      style="
+      background:#1a202c;
+      border-radius:6px;
+      padding:12px 16px;
+      margin-bottom:16px;
+      font-size:13px;
+      line-height:1.6;
+      color:<%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
+      border-left:3px solid <%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
+    "
+    >
+      <%= @result.interpretation %>
+    </div>
+  <% end %>
+
+  <%# Plan tree %>
+  <div class="card">
+    <div class="card-title">
+      Execution Plan
+      <span style="color:#a0aec0;font-size:11px;font-weight:normal;margin-left:8px;"> click any node to expand explanation </span>
+    </div>
+
+    <div style="padding:8px 0;">
+      <%= render partial: "rails_vitals/explains/plan_node",
+                 locals: { node: @result.plan, depth: 0 } %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  var cacheKey = "explain_<%= Digest::MD5.hexdigest(@sql.to_s) %>";
+  // Mark this result as cached for the back-navigation case
+  // The actual caching is handled by the browser's back/forward cache
+  // For explicit revisits, the EXPLAIN button passes the same SQL
+  // so the URL is deterministic and browser cache handles it
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, "", window.location.href);
+  }
+
+  function toggleExplanation(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+</script>

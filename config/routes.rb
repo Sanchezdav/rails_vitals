@@ -6,4 +6,5 @@ RailsVitals::Engine.routes.draw do
   resources :n_plus_ones, only: [ :index, :show ]
   resources :associations, only: [ :index ]
   get "heatmap", to: "heatmap#index", as: :heatmap
+  get "explain", to: "explains#show", as: :explain
 end

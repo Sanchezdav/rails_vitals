@@ -24,18 +24,18 @@ var ID_LINKS        = 'panel-links';
 function toggleDna(id) {
   var row = document.getElementById(id);
   if (row) {
-    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    var isHidden = window.getComputedStyle(row).display === 'none';
+    row.classList.remove('d-none');
+    row.style.display = isHidden ? 'table-row' : 'none';
   }
 }
 
 function toggleCard(id, chevronId) {
   var card = document.getElementById(id);
   if (card) {
-    if (card.style.display === 'none') {
-      card.style.display = card.tagName === 'TABLE' ? 'table' : 'block';
-    } else {
-      card.style.display = 'none';
-    }
+    var isHidden = window.getComputedStyle(card).display === 'none';
+    card.classList.remove('d-none');
+    card.style.display = isHidden ? (card.tagName === 'TABLE' ? 'table' : 'block') : 'none';
   }
 
   if (chevronId) {
@@ -49,7 +49,11 @@ function toggleCard(id, chevronId) {
 // ─── explains/show ──────────────────────────────────────────────────────────
 function toggleExplanation(id) {
   var el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) {
+    var isHidden = window.getComputedStyle(el).display === 'none';
+    el.classList.remove('d-none');
+    el.style.display = isHidden ? 'block' : 'none';
+  }
 }
 
 // ─── associations/index ─────────────────────────────────────────────────────

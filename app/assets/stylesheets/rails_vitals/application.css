@@ -178,3 +178,178 @@ tr:hover td { background: #1e2535; }
   border-radius: 3px;
   font-size: 10px;
 }
+
+/* ─── Spacing — margin ─────────────────────────────────────────────────────── */
+.mb-0  { margin-bottom: 0; }
+.mb-4  { margin-bottom: 4px; }
+.mb-6  { margin-bottom: 6px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-2  { margin-top: 2px; }
+.mt-4  { margin-top: 4px; }
+.mt-6  { margin-top: 6px; }
+.ml-6  { margin-left: 6px; }
+.ml-8  { margin-left: 8px; }
+
+/* ─── Font size ────────────────────────────────────────────────────────────── */
+.text-10 { font-size: 10px; }
+.text-12 { font-size: 12px; }
+.text-16 { font-size: 16px; }
+.text-24 { font-size: 24px; }
+
+/* ─── Misc ─────────────────────────────────────────────────────────────────── */
+.text-right   { text-align: right; }
+.line-relaxed { line-height: 1.6; }
+.word-break   { white-space: pre-wrap; word-break: break-all; }
+
+/* ─── Structural components ────────────────────────────────────────────────── */
+.section-divider {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2d3748;
+}
+
+.info-block {
+  background: #1a202c;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.stat-card-dark {
+  background: #2d3748;
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.dna-panel {
+  background: #1a202c;
+  border-left: 3px solid #4299e1;
+  padding: 16px;
+  margin: 4px 0;
+}
+
+.explain-btn {
+  font-size: 10px;
+  background: #1a2d3a;
+  border: 1px solid #4299e144;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ─── Color utilities ──────────────────────────────────────────────────────── */
+.text-muted   { color: #a0aec0; }
+.text-primary { color: #e2e8f0; }
+.text-grey    { color: #718096; }
+.text-healthy { color: #68d391; }
+.text-danger  { color: #fc8181; }
+.text-accent  { color: #90cdf4; }
+.text-blue    { color: #4299e1; }
+.text-orange  { color: #f6ad55; }
+.text-purple  { color: #9f7aea; }
+
+/* ─── Typography utilities ─────────────────────────────────────────────────── */
+.mono        { font-family: ui-monospace, monospace; }
+.bold        { font-weight: bold; }
+.text-upper  { text-transform: uppercase; letter-spacing: 0.05em; }
+.text-nowrap { white-space: nowrap; }
+.truncate    { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text-sm     { font-size: 11px; }
+.text-center { text-align: center; }
+
+/* ─── Layout utilities ─────────────────────────────────────────────────────── */
+.flex         { display: flex; }
+.flex-center  { display: flex; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-wrap    { flex-wrap: wrap; }
+.flex-1       { flex: 1; }
+.d-none       { display: none; }
+.cursor-pointer { cursor: pointer; }
+
+/* ─── Page structure ───────────────────────────────────────────────────────── */
+.page-header   { margin-bottom: 24px; }
+.page-heading  { font-size: 20px; font-weight: bold; color: #e2e8f0; }
+.page-subtitle { color: #a0aec0; font-size: 13px; margin-top: 4px; }
+.back-link     { color: #a0aec0; font-size: 13px; }
+
+/* ─── Component utilities ──────────────────────────────────────────────────── */
+.section-label {
+  color: #a0aec0;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.mini-label {
+  color: #718096;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.empty-state { color: #a0aec0; text-align: center; padding: 48px; }
+
+.code-block {
+  background: #1a202c;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.code-block-dark {
+  background: #2d3748;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.stat-value-lg {
+  font-size: 20px;
+  font-weight: bold;
+  font-family: ui-monospace, monospace;
+}
+
+.stat-value-xl {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.stat-box {
+  flex: 1;
+  background: #1a202c;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+}
+
+.impact-box {
+  background: #1a202c;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.callback-badge {
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}

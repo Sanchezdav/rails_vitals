@@ -1,21 +1,21 @@
-<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-  <%= link_to "← Back", rails_vitals.requests_path, style: "color:#a0aec0;font-size:12px;" %>
+<div class="flex-center mb-20" style="gap:16px;">
+  <%= link_to "← Back", rails_vitals.requests_path, class: "back-link" %>
   <div class="page-title" style="margin:0;">Request Detail</div>
 </div>
 
 <%# Header %>
-<div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+<div class="card flex-between">
   <div>
-    <div style="font-size:42px;font-weight:bold;color:<%= score_color(@record.color) %>;">
+    <div class="bold" style="font-size:42px;color:<%= score_color(@record.color) %>;">
       <%= @record.score %>
-      <span style="font-size:16px;color:#a0aec0;">/ 100</span>
+      <span class="text-muted" style="font-size:16px;">/ 100</span>
     </div>
   </div>
-  <div style="text-align:right;">
+  <div class="text-right">
     <span class="badge badge-<%= @record.color %>" style="font-size:13px;padding:4px 14px;">
       <%= @record.label %>
     </span>
-    <div style="color:#a0aec0;font-size:11px;margin-top:6px;"><%= @record.recorded_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
+    <div class="text-muted text-sm mt-6"><%= @record.recorded_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
   </div>
 </div>
 
@@ -24,10 +24,10 @@
   <div class="card-title">Request Info</div>
   <table>
     <tbody>
-      <tr><td style="color:#a0aec0;width:140px;">Endpoint</td><td><%= @record.endpoint %></td></tr>
-      <tr><td style="color:#a0aec0;">Method</td>  <td><%= @record.http_method %></td></tr>
-      <tr><td style="color:#a0aec0;">Status</td>  <td><%= @record.response_status %></td></tr>
-      <tr><td style="color:#a0aec0;">Duration</td><td><%= @record.duration_ms&.round(1) %>ms</td></tr>
+      <tr><td class="text-muted" style="width:140px;">Endpoint</td><td><%= @record.endpoint %></td></tr>
+      <tr><td class="text-muted">Method</td>  <td><%= @record.http_method %></td></tr>
+      <tr><td class="text-muted">Status</td>  <td><%= @record.response_status %></td></tr>
+      <tr><td class="text-muted">Duration</td><td><%= @record.duration_ms&.round(1) %>ms</td></tr>
     </tbody>
   </table>
 </div>
@@ -37,15 +37,15 @@
   <div class="card-title">Query Summary</div>
   <table>
     <tbody>
-      <tr><td style="color:#a0aec0;width:140px;">Total Queries</td><td><%= @record.total_query_count %></td></tr>
-      <tr><td style="color:#a0aec0;">DB Time</td>     <td><%= @record.total_db_time_ms.round(1) %>ms</td></tr>
+      <tr><td class="text-muted" style="width:140px;">Total Queries</td><td><%= @record.total_query_count %></td></tr>
+      <tr><td class="text-muted">DB Time</td>     <td><%= @record.total_db_time_ms.round(1) %>ms</td></tr>
       <tr>
-        <td style="color:#a0aec0;">N+1 Patterns</td>
+        <td class="text-muted">N+1 Patterns</td>
         <td>
           <% if @record.n_plus_one_patterns.any? %>
             <span class="n1-badge"><%= @record.n_plus_one_patterns.size %> detected</span>
           <% else %>
-            <span style="color:#68d391;">None detected</span>
+            <span class="text-healthy">None detected</span>
           <% end %>
         </td>
       </tr>
@@ -78,17 +78,13 @@
 
 <%# All Queries %>
 <div class="card">
-  <div
-    class="card-title"
-    onclick="toggleCard('all_queries_table', 'all_queries_chevron_simple')"
-    style="cursor:pointer;"
-  >
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+  <div class="card-title cursor-pointer" onclick="toggleCard('all_queries_table', 'all_queries_chevron_simple')">
+    <div class="flex-between">
       <span>All Queries (<%= @record.queries.size %>)</span>
       <span style="font-size:14px;" id="all_queries_chevron_simple">▼</span>
     </div>
   </div>
-  <table id="all_queries_table" style="display: none;">
+  <table id="all_queries_table" class="d-none">
     <thead>
       <tr>
         <th>SQL</th>
@@ -99,7 +95,7 @@
       <% @record.queries.sort_by { |q| -q[:duration_ms] }.each do |q| %>
         <tr>
           <td class="sql"><%= q[:sql] %></td>
-          <td style="white-space:nowrap;"><%= q[:duration_ms].round(1) %>ms</td>
+          <td class="text-nowrap"><%= q[:duration_ms].round(1) %>ms</td>
         </tr>
       <% end %>
     </tbody>
@@ -111,23 +107,16 @@
   <div class="card">
     <div class="card-title">
       Callback Map
-      <span style="color:#a0aec0;font-weight:normal;margin-left:8px;">
+      <span class="text-muted ml-8" style="font-weight:normal;">
         <%= @record.callbacks.size %> callbacks —
         <%= @record.total_callback_time_ms.round(1) %>ms total
       </span>
     </div>
     <% @record.callbacks.group_by { |c| c[:model] }.each do |model, callbacks| %>
-      <div style="margin-bottom:16px;">
-        <div style="
-          color:#90cdf4;
-          font-size:12px;
-          font-weight:bold;
-          margin-bottom:6px;
-          padding-bottom:4px;
-          border-bottom:1px solid #2d3748;
-        ">
+      <div class="mb-16">
+        <div class="text-accent bold text-12 mb-6" style="padding-bottom:4px;border-bottom:1px solid #2d3748;">
           <%= model %>
-          <span style="color:#a0aec0;font-weight:normal;">
+          <span class="text-muted" style="font-weight:normal;">
             (<%= callbacks.size %> callbacks,
             <%= callbacks.sum { |c| c[:duration_ms] }.round(1) %>ms)
           </span>
@@ -144,18 +133,12 @@
             <% callbacks.sort_by { |c| -c[:duration_ms] }.each do |cb| %>
               <tr>
                 <td>
-                  <span style="
-                    background:<%= callback_color(cb[:kind]) %>;
-                    color:#fff;
-                    padding:1px 6px;
-                    border-radius:3px;
-                    font-size:11px;
-                  ">
+                  <span class="callback-badge" style="background:<%= callback_color(cb[:kind]) %>;">
                     <%= cb[:kind] %>
                   </span>
                 </td>
                 <td><%= cb[:duration_ms] %>ms</td>
-                <td style="color:#a0aec0;">
+                <td class="text-muted">
                   <% pct = @record.total_callback_time_ms > 0 ?
                     ((cb[:duration_ms] / @record.total_callback_time_ms) * 100).round(1) : 0 %>
                   <%= pct %>%
@@ -171,22 +154,16 @@
 
 <%# All Queries with DNA %>
 <div class="card">
-  <div
-    class="card-title"
-    onclick="toggleCard('all_queries_table_dna', 'all_queries_chevron_dna')"
-    style="cursor:pointer;"
-  >
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+  <div class="card-title cursor-pointer" onclick="toggleCard('all_queries_table_dna', 'all_queries_chevron_dna')">
+    <div class="flex-between">
       <p>
         All Queries (<%= @record.queries.size %>)
-        <span class="card-title-description">
-          click any query to expand DNA
-        </span>
+        <span class="card-title-description">click any query to expand DNA</span>
       </p>
       <span style="font-size:14px;" id="all_queries_chevron_dna">▼</span>
     </div>
   </div>
-  <table id="all_queries_table_dna" style="display: none;">
+  <table id="all_queries_table_dna" class="d-none">
     <thead>
       <tr>
         <th>#</th>
@@ -203,26 +180,23 @@
         <% dna_id = "dna_#{i}" %>
 
         <%# Query row — clickable %>
-        <tr
-          onclick="toggleDna('<%= dna_id %>')"
-          style="cursor:pointer;"
-        >
-          <td style="color:#a0aec0;"><%= i + 1 %></td>
-          <td style="font-family:monospace;font-size:11px;color:#e2e8f0;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        <tr onclick="toggleDna('<%= dna_id %>')" class="cursor-pointer">
+          <td class="text-muted"><%= i + 1 %></td>
+          <td class="mono text-sm text-primary truncate" style="max-width:400px;">
             <%= q[:sql] %>
           </td>
           <td style="color:<%= time_heat_color(q[:duration_ms]) %>;">
             <%= q[:duration_ms].round(2) %>ms
           </td>
           <td>
-            <span style="color:<%= dna.complexity_label[:color] %>;font-size:12px;">
+            <span class="text-12" style="color:<%= dna.complexity_label[:color] %>;">
               <%= dna.complexity_label[:label] %>
-              <span style="color:#a0aec0;font-size:10px;">(<%= dna.complexity %>/10)</span>
+              <span class="text-muted" style="font-size:10px;">(<%= dna.complexity %>/10)</span>
             </span>
           </td>
           <td>
             <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
-            <span style="color:<%= risk_colors[dna.risk] %>;font-size:12px;text-transform:capitalize;">
+            <span class="text-12" style="color:<%= risk_colors[dna.risk] %>;text-transform:capitalize;">
               <%= dna.risk %>
             </span>
           </td>
@@ -230,20 +204,15 @@
         </tr>
 
         <%# DNA panel — hidden by default %>
-        <tr id="<%= dna_id %>" style="display:none;">
+        <tr id="<%= dna_id %>" class="d-none">
           <td colspan="5" style="padding:0;">
-            <div style="
-              background:#1a202c;
-              border-left:3px solid #4299e1;
-              padding:16px;
-              margin:4px 0;
-            ">
+            <div class="dna-panel">
               <% if q[:sql].strip.match?(/\ASELECT/i) %>
-                <div style="margin-bottom:8px;display:flex;justify-content:flex-end;">
+                <div class="flex mb-8" style="justify-content:flex-end;">
                   <a
                     href="<%= rails_vitals.explain_path(sql: q[:sql], request_id: @record.id) %>"
                     target="_blank"
-                    style="color:#4299e1;font-size:10px;background:#1a2d3a;border:1px solid #4299e144;padding:2px 8px;border-radius:3px;text-decoration:none;white-space:nowrap;"
+                    class="text-blue text-nowrap explain-btn"
                   >
                     EXPLAIN →
                   </a>
@@ -251,32 +220,20 @@
               <% end %>
 
               <%# Full SQL %>
-              <div style="margin-bottom:16px;">
-                <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
-                  Full SQL
-                </div>
-                <pre style="color:#e2e8f0;font-size:11px;white-space:pre-wrap;word-break:break-all;margin:0;"><%= q[:sql] %></pre>
+              <div class="mb-16">
+                <div class="mini-label">Full SQL</div>
+                <pre class="text-primary text-sm word-break"><%= q[:sql] %></pre>
               </div>
 
               <%# Token strip %>
-              <div style="margin-bottom:16px;">
-                <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
-                  Query DNA
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <div class="mb-16">
+                <div class="mini-label">Query DNA</div>
+                <div class="flex flex-wrap" style="gap:6px;">
                   <% dna.tokens.each do |token| %>
                     <span
                       onclick="toggleCard('<%= "card_#{dna_id}_#{token[:type]}" %>'); event.stopPropagation();"
-                      style="
-                        background:<%= token[:color] %>22;
-                        color:<%= token[:color] %>;
-                        border:1px solid <%= token[:color] %>66;
-                        padding:3px 10px;
-                        border-radius:4px;
-                        font-size:12px;
-                        font-family:monospace;
-                        cursor:pointer;
-                      "
+                      class="mono cursor-pointer"
+                      style="background:<%= token[:color] %>22;color:<%= token[:color] %>;border:1px solid <%= token[:color] %>66;padding:3px 10px;border-radius:4px;font-size:12px;"
                     >
                       <%= token[:label] %>
                     </span>
@@ -286,20 +243,14 @@
 
               <%# Repetition bar %>
               <% if dna.repetition_bar.is_a?(Hash) && dna.repetition_count > 1 %>
-                <div style="margin-bottom:16px;">
-                  <div style="color:#a0aec0;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
-                    Repetition — <%= dna.repetition_count %>x in this request
-                  </div>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="font-family:monospace;font-size:13px;">
-                      <span style="color:#fc8181;">
-                        <%= "█" * dna.repetition_bar[:filled] %>
-                      </span>
-                      <span style="color:#2d3748;">
-                        <%= "█" * dna.repetition_bar[:empty] %>
-                      </span>
+                <div class="mb-16">
+                  <div class="mini-label">Repetition — <%= dna.repetition_count %>x in this request</div>
+                  <div class="flex-center" style="gap:8px;">
+                    <div class="mono" style="font-size:13px;">
+                      <span class="text-danger"><%= "█" * dna.repetition_bar[:filled] %></span>
+                      <span style="color:#2d3748;"><%= "█" * dna.repetition_bar[:empty] %></span>
                     </div>
-                    <span style="color:#fc8181;font-size:12px;font-weight:bold;">
+                    <span class="text-danger bold text-12">
                       <%= dna.repetition_count %>x — N+1 pattern
                     </span>
                   </div>
@@ -307,23 +258,23 @@
               <% end %>
 
               <%# Complexity + metadata row %>
-              <div style="display:flex;gap:24px;margin-bottom:16px;font-size:12px;">
+              <div class="flex mb-16 text-12" style="gap:24px;">
                 <div>
-                  <span style="color:#a0aec0;">Complexity</span>
-                  <span style="color:<%= dna.complexity_label[:color] %>;margin-left:6px;font-weight:bold;">
+                  <span class="text-muted">Complexity</span>
+                  <span class="bold ml-6" style="color:<%= dna.complexity_label[:color] %>;">
                     <%= dna.complexity_label[:label] %> (<%= dna.complexity %>/10)
                   </span>
                 </div>
                 <div>
-                  <span style="color:#a0aec0;">Risk</span>
+                  <span class="text-muted">Risk</span>
                   <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
-                  <span style="color:<%= risk_colors[dna.risk] %>;margin-left:6px;font-weight:bold;text-transform:capitalize;">
+                  <span class="bold ml-6" style="color:<%= risk_colors[dna.risk] %>;text-transform:capitalize;">
                     <%= dna.risk %>
                   </span>
                 </div>
                 <div>
-                  <span style="color:#a0aec0;">Duration</span>
-                  <span style="color:<%= time_heat_color(q[:duration_ms]) %>;margin-left:6px;font-weight:bold;">
+                  <span class="text-muted">Duration</span>
+                  <span class="bold ml-6" style="color:<%= time_heat_color(q[:duration_ms]) %>;">
                     <%= q[:duration_ms].round(2) %>ms
                   </span>
                 </div>
@@ -331,38 +282,18 @@
 
               <%# Education cards — one per token, hidden by default %>
               <% dna.tokens.each do |token| %>
-                <div
-                  id="card_<%= dna_id %>_<%= token[:type] %>"
-                  style="display:none;margin-bottom:8px;"
-                >
-                  <div style="
-                    background:#2d3748;
-                    border-left:3px solid <%= token[:color] %>;
-                    border-radius:4px;
-                    padding:12px 16px;
-                  ">
-                    <div style="
-                      color:<%= token[:color] %>;
-                      font-size:12px;
-                      font-weight:bold;
-                      font-family:monospace;
-                      margin-bottom:6px;
-                    ">
+                <div id="card_<%= dna_id %>_<%= token[:type] %>" class="d-none mb-8">
+                  <div style="background:#2d3748;border-left:3px solid <%= token[:color] %>;border-radius:4px;padding:12px 16px;">
+                    <div class="bold mono mb-6" style="color:<%= token[:color] %>;font-size:12px;">
                       💡 <%= token[:label] %>
-                      <span style="
-                        background:<%= token[:color] %>33;
-                        color:<%= token[:color] %>;
-                        font-size:10px;
-                        padding:1px 6px;
-                        border-radius:3px;
-                        margin-left:6px;
-                        text-transform:uppercase;
-                        font-family:Arial,sans-serif;
-                      ">
+                      <span
+                        class="text-upper"
+                        style="background:<%= token[:color] %>33;color:<%= token[:color] %>;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:6px;font-family:Arial,sans-serif;"
+                      >
                         <%= token[:risk] %>
                       </span>
                     </div>
-                    <div style="color:#e2e8f0;font-size:13px;line-height:1.6;">
+                    <div class="text-primary line-relaxed">
                       <%= token[:explanation] %>
                     </div>
                   </div>

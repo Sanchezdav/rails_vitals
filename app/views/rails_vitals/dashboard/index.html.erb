@@ -44,7 +44,7 @@
             <% if r.n_plus_one_patterns.any? %>
               <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
             <% else %>
-              <span style="color:#68d391;">None</span>
+              <span class="text-healthy">None</span>
             <% end %>
           </td>
           <td><%= r.duration_ms&.round(1) %>ms</td>
@@ -82,7 +82,7 @@
 </div>
 
 <% if @records.any? %>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;">
+  <div class="grid-3">
 
     <div class="card">
       <div class="card-title">Score Distribution</div>
@@ -99,7 +99,7 @@
             <tr>
               <td><%= label %></td>
               <td><%= count %></td>
-              <td style="color:#a0aec0;">
+              <td class="text-muted">
                 <%= @total > 0 ? ((count.to_f / @total) * 100).round(1) : 0 %>%
               </td>
             </tr>
@@ -120,7 +120,7 @@
         <tbody>
           <% @health_trend.each do |endpoint, score| %>
             <tr>
-              <td style="color:#a0aec0;font-size:11px;"><%= endpoint %></td>
+              <td class="text-muted text-sm"><%= endpoint %></td>
               <td>
                 <span class="badge badge-<%= score_label_to_color(score) %>">
                   <%= score %>
@@ -145,9 +145,9 @@
         <tbody>
           <% @query_volume.each do |label, stats| %>
             <tr>
-              <td style="color:#a0aec0;font-size:11px;"><%= label %></td>
+              <td class="text-muted text-sm"><%= label %></td>
               <td><%= stats[:queries] %></td>
-              <td style="color:#a0aec0;"><%= stats[:db_time] %>ms</td>
+              <td class="text-muted"><%= stats[:db_time] %>ms</td>
             </tr>
           <% end %>
         </tbody>

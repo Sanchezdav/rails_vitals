@@ -1,112 +1,67 @@
 <%# app/views/rails_vitals/n_plus_one/show.html.erb %>
-<div style="margin-bottom:24px;">
-  <div style="margin-bottom:8px;">
-    <%= link_to "← N+1 Patterns", n_plus_ones_path,
-          style: "color:#a0aec0;font-size:13px;" %>
+<div class="page-header">
+  <div class="mb-8">
+    <%= link_to "← N+1 Patterns", n_plus_ones_path, class: "back-link" %>
   </div>
-  <h1 style="font-size:20px;font-weight:bold;color:#e2e8f0;">Impact Simulator</h1>
+  <h1 class="page-heading">Impact Simulator</h1>
 </div>
 
 <%# Pattern card %>
-<div class="card" style="margin-bottom:16px;">
+<div class="card mb-16">
   <div class="card-title">Detected Pattern</div>
-  <pre style="
-    background:#1a202c;
-    padding:12px;
-    border-radius:6px;
-    font-size:12px;
-    color:#a0aec0;
-    white-space:pre-wrap;
-    word-break:break-all;
-    margin-bottom:16px;
-  "><%= @pattern[:pattern] %></pre>
+  <pre class="code-block text-muted mb-16"><%= @pattern[:pattern] %></pre>
 
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:13px;">
     <div>
-      <div style="color:#a0aec0;margin-bottom:4px;">Total Occurrences</div>
-      <div style="color:#fc8181;font-size:20px;font-weight:bold;"><%= @pattern[:occurrences] %>x</div>
+      <div class="text-muted mb-4">Total Occurrences</div>
+      <div class="text-danger stat-value-lg"><%= @pattern[:occurrences] %>x</div>
     </div>
     <div>
-      <div style="color:#a0aec0;margin-bottom:4px;">Estimated Time Wasted</div>
-      <div style="color:#fc8181;font-size:20px;font-weight:bold;"><%= @estimated_saving_ms %>ms</div>
+      <div class="text-muted mb-4">Estimated Time Wasted</div>
+      <div class="text-danger stat-value-lg"><%= @estimated_saving_ms %>ms</div>
     </div>
     <div>
-      <div style="color:#a0aec0;margin-bottom:4px;">Affected Requests</div>
-      <div style="color:#e2e8f0;font-size:20px;font-weight:bold;"><%= @affected_requests.size %></div>
+      <div class="text-muted mb-4">Affected Requests</div>
+      <div class="text-primary stat-value-lg"><%= @affected_requests.size %></div>
     </div>
   </div>
 </div>
 
 <%# Fix suggestion card %>
-<div class="card" style="margin-bottom:16px;">
+<div class="card mb-16">
   <div class="card-title">Suggested Fix</div>
-  <div style="margin-bottom:12px;color:#a0aec0;font-size:13px;">
+  <div class="text-muted mb-12">
     <%= @pattern[:fix_suggestion][:description] %>
   </div>
-  <pre style="
-    background:#1a202c;
-    padding:12px;
-    border-radius:6px;
-    font-size:13px;
-    color:#68d391;
-  "><%= @pattern[:fix_suggestion][:code] %></pre>
+  <pre class="code-block text-healthy"><%= @pattern[:fix_suggestion][:code] %></pre>
 </div>
 
 <%# Impact simulator card %>
-<div class="card" style="margin-bottom:16px;">
+<div class="card mb-16">
   <div class="card-title">
     Impact Simulator
-    <span style="color:#a0aec0;font-weight:normal;font-size:12px;margin-left:8px;">
+    <span class="text-muted text-12 ml-8" style="font-weight:normal;">
       if you fix this N+1
     </span>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
-    <div style="
-      background:#1a202c;
-      border-radius:8px;
-      padding:16px;
-      text-align:center;
-    ">
-      <div style="color:#a0aec0;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
-        Est. Saving Per Request
-      </div>
-      <div style="color:#68d391;font-size:28px;font-weight:bold;">
-        <%= @avg_saving_per_request %>ms
-      </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" class="mb-24">
+    <div class="impact-box">
+      <div class="section-label">Est. Saving Per Request</div>
+      <div class="text-healthy stat-value-xl"><%= @avg_saving_per_request %>ms</div>
     </div>
-    <div style="
-      background:#1a202c;
-      border-radius:8px;
-      padding:16px;
-      text-align:center;
-    ">
-      <div style="color:#a0aec0;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
-        Total Time Recovered
-      </div>
-      <div style="color:#68d391;font-size:28px;font-weight:bold;">
-        <%= @estimated_saving_ms %>ms
-      </div>
+    <div class="impact-box">
+      <div class="section-label">Total Time Recovered</div>
+      <div class="text-healthy stat-value-xl"><%= @estimated_saving_ms %>ms</div>
     </div>
-    <div style="
-      background:#1a202c;
-      border-radius:8px;
-      padding:16px;
-      text-align:center;
-    ">
-      <div style="color:#a0aec0;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
-        Requests Affected
-      </div>
-      <div style="color:#e2e8f0;font-size:28px;font-weight:bold;">
-        <%= @affected_requests.size %>
-      </div>
+    <div class="impact-box">
+      <div class="section-label">Requests Affected</div>
+      <div class="text-primary stat-value-xl"><%= @affected_requests.size %></div>
     </div>
   </div>
 
   <%# Affected requests list %>
-  <div style="color:#a0aec0;font-size:11px;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">
-    Affected Requests
-  </div>
+  <div class="section-label">Affected Requests</div>
   <table>
     <thead>
       <tr>
@@ -127,10 +82,9 @@
             </span>
           </td>
           <td><%= r.total_query_count %></td>
-          <td style="color:#a0aec0;"><%= r.duration_ms.round(1) %>ms</td>
+          <td class="text-muted"><%= r.duration_ms.round(1) %>ms</td>
           <td>
-            <%= link_to "→", request_path(r.id),
-                  style: "color:#90cdf4;" %>
+            <%= link_to "→", request_path(r.id), class: "text-accent" %>
           </td>
         </tr>
       <% end %>

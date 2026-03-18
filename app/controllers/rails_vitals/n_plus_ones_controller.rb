@@ -2,7 +2,6 @@ module RailsVitals
   class NPlusOnesController < ApplicationController
     def index
       records    = RailsVitals.store.all
-      Rails.logger.debug "ALL RECORDS: #{records}"
       @patterns  = Analyzers::NPlusOneAggregator.aggregate(records)
       @total_requests = records.size
     end

@@ -243,18 +243,9 @@
   </div>
 <% end %>
 
+<%# Push current URL into history so back-nav reuses the cached EXPLAIN result %>
 <script>
-  var cacheKey = "explain_<%= Digest::MD5.hexdigest(@sql.to_s) %>";
-  // Mark this result as cached for the back-navigation case
-  // The actual caching is handled by the browser's back/forward cache
-  // For explicit revisits, the EXPLAIN button passes the same SQL
-  // so the URL is deterministic and browser cache handles it
   if (window.history && window.history.replaceState) {
     window.history.replaceState(null, "", window.location.href);
-  }
-
-  function toggleExplanation(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
   }
 </script>

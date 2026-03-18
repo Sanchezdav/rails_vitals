@@ -377,32 +377,3 @@
     </tbody>
   </table>
 </div>
-
-<%# Inline JS for toggle behavior %>
-<script>
-  function toggleDna(id) {
-    var row = document.getElementById(id);
-    if (row) {
-      row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
-    }
-  }
-
-  function toggleCard(id, chevronId) {
-    var card = document.getElementById(id);
-    if (card) {
-      if (card.style.display === 'none') {
-        card.style.display = card.tagName === 'TABLE' ? 'table' : 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    }
-
-    // Toggle chevron icon if provided
-    if (chevronId) {
-      var chevron = document.getElementById(chevronId);
-      if (chevron) {
-        chevron.textContent = chevron.textContent === '▼' ? '▶' : '▼';
-      }
-    }
-  }
-</script>

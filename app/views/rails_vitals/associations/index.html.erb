@@ -243,7 +243,7 @@
   </div>
 </div>
 
-<%# Node data for JS — embedded as JSON %>
+<%# Data bridge — JSON for selectNode() / closePanel() defined in rails_vitals/application.js %>
 <script>
   var NODE_DATA = <%= raw @nodes.map { |n| [
     n.name,
@@ -268,103 +268,6 @@
     }
   ] }.to_h.to_json %>;
 
-  var N1_PATH     = "<%= rails_vitals.n_plus_ones_path %>";
+  var N1_PATH      = "<%= rails_vitals.n_plus_ones_path %>";
   var REQUEST_PATH = "<%= rails_vitals.requests_path %>";
-
-  function selectNode(nameJson) {
-    var name = JSON.parse(nameJson);
-    var node = NODE_DATA[name];
-    if (!node) return;
-
-    // Highlight selected node
-    document.querySelectorAll('[id^="node-"]').forEach(function(el) {
-      el.style.opacity = '0.4';
-    });
-    var el = document.getElementById('node-' + name);
-    if (el) el.style.opacity = '1';
-
-    // Populate panel
-    document.getElementById('panel-model-name').textContent = node.name;
-    document.getElementById('panel-query-count').textContent = node.query_count;
-    document.getElementById('panel-avg-time').textContent = node.avg_query_time_ms;
-
-    var n1Count = node.n1_patterns.length;
-    var n1El = document.getElementById('panel-n1-count');
-    n1El.textContent = n1Count;
-    n1El.style.color = n1Count > 0 ? '#fc8181' : '#68d391';
-
-    // Associations list
-    var assocHtml = '';
-    node.associations.forEach(function(a) {
-      var macroColor = a.macro === 'belongs_to' ? '#9f7aea' : '#f6ad55';
-      var n1Badge    = a.has_n1
-        ? '<span style="background:#fc818133;color:#fc8181;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">N+1</span>'
-        : '';
-      var indexBadge = a.indexed
-        ? '<span style="background:#68d39133;color:#68d391;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">indexed</span>'
-        : '<span style="background:#f6ad5533;color:#f6ad55;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">⚠ no index</span>';
-
-      assocHtml +=
-        '<div style="padding:8px;background:#1a202c;border-radius:4px;margin-bottom:6px;font-size:12px;">' +
-          '<span style="color:' + macroColor + ';font-family:monospace;">' + a.macro + '</span>' +
-          ' <span style="color:#e2e8f0;font-family:monospace;">:' + a.to_model.toLowerCase() + '</span>' +
-          n1Badge +
-          '<div style="color:#718096;font-size:10px;margin-top:4px;font-family:monospace;">' +
-            'fk: ' + a.foreign_key + indexBadge +
-          '</div>' +
-        '</div>';
-    });
-    document.getElementById('panel-associations').innerHTML =
-      assocHtml || '<div style="color:#718096;font-size:12px;">No associations</div>';
-
-    // N+1 section
-    var n1Section = document.getElementById('panel-n1-section');
-    if (n1Count > 0) {
-      n1Section.style.display = 'block';
-      var n1Html = '';
-      node.n1_patterns.forEach(function(p) {
-        n1Html +=
-          '<div style="padding:8px;background:#2d1515;border:1px solid #fc818144;' +
-                      'border-radius:4px;margin-bottom:6px;font-size:11px;">' +
-            '<div style="color:#fc8181;font-family:monospace;margin-bottom:4px;">' +
-              p.occurrences + 'x detected' +
-            '</div>' +
-            (p.fix_suggestion
-              ? '<div style="color:#68d391;font-family:monospace;">Fix: ' + p.fix_suggestion + '</div>'
-              : '') +
-          '</div>';
-      });
-      document.getElementById('panel-n1-list').innerHTML = n1Html;
-    } else {
-      n1Section.style.display = 'none';
-    }
-
-    // Action links
-    var linksHtml = ""
-
-    if (n1Count > 0) {
-      linksHtml +=
-        '<a href="' + N1_PATH + '" ' +
-           'style="display:block;background:#2d1515;border:1px solid #fc818166;' +
-                  'color:#fc8181;padding:8px 12px;border-radius:4px;font-size:12px;' +
-                  'text-decoration:none;text-align:center;margin-top:8px;">' +
-          'View N+1 patterns →' +
-        '</a>';
-    }
-    document.getElementById('panel-links').innerHTML = linksHtml;
-
-    // Open panel
-    var panel = document.getElementById('assoc-panel');
-    var inner = document.getElementById('assoc-panel-inner');
-    panel.style.width = '320px';
-    inner.style.display = 'block';
-  }
-
-  function closePanel() {
-    document.getElementById('assoc-panel').style.width = '0';
-    document.getElementById('assoc-panel-inner').style.display = 'none';
-    document.querySelectorAll('[id^="node-"]').forEach(function(el) {
-      el.style.opacity = '1';
-    });
-  }
 </script>

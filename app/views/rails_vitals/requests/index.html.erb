@@ -10,11 +10,11 @@
 </div>
 
 <% if params[:endpoint].present? %>
-  <div style="margin:20px 0;font-size:13px;color:#a0aec0;">
+  <div class="text-muted" style="margin:20px 0;">
     Filtering by endpoint:
-    <span style="color:#90cdf4;"><%= params[:endpoint] %></span>
+    <span class="text-accent"><%= params[:endpoint] %></span>
     &nbsp;
-    <%= link_to "✕ Clear", requests_path, style: "color:#fc8181;text-decoration:none;" %>
+    <%= link_to "✕ Clear", requests_path, class: "text-danger" %>
   </div>
 <% end %>
 
@@ -35,7 +35,7 @@
     <tbody>
       <% @records.each do |r| %>
         <tr>
-          <td style="color:#a0aec0;font-size:11px;"><%= r.recorded_at.strftime("%H:%M:%S") %></td>
+          <td class="text-muted text-sm"><%= r.recorded_at.strftime("%H:%M:%S") %></td>
           <td><%= r.endpoint %></td>
           <td>
             <span class="badge badge-<%= r.color %>">
@@ -48,7 +48,7 @@
             <% if r.n_plus_one_patterns.any? %>
               <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
             <% else %>
-              <span style="color:#68d391;">—</span>
+              <span class="text-healthy">—</span>
             <% end %>
           </td>
           <td><%= r.duration_ms&.round(1) %>ms</td>

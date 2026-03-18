@@ -6,6 +6,7 @@ module RailsVitals
     COLOR_RED = "#c53030"
     COLOR_DARK_RED = "#742a2a"
     COLOR_GRAY = "#4a5568"
+    COLOR_NEUTRAL = "#a0aec0"
     COLOR_LIGHT_RED = "#fc8181"
     COLOR_ORANGE = "#f6ad55"
     COLOR_LIGHT_GREEN = "#68d391"
@@ -57,6 +58,33 @@ module RailsVitals
       if pct >= 75    then COLOR_LIGHT_RED
       elsif pct >= 25 then COLOR_ORANGE
       else                 COLOR_LIGHT_GREEN
+      end
+    end
+
+    def cost_color(cost)
+      return COLOR_NEUTRAL unless cost
+      cost = cost.to_f
+      if    cost < 100   then COLOR_LIGHT_GREEN
+      elsif cost < 1000  then COLOR_ORANGE
+      else                    COLOR_LIGHT_RED
+      end
+    end
+
+    def time_color(ms)
+      return COLOR_NEUTRAL unless ms
+      ms = ms.to_f
+      if    ms < 10   then COLOR_LIGHT_GREEN
+      elsif ms < 100  then COLOR_ORANGE
+      else                 COLOR_LIGHT_RED
+      end
+    end
+
+    def rows_color(rows)
+      return COLOR_NEUTRAL unless rows
+      rows = rows.to_i
+      if    rows < 1_000   then COLOR_LIGHT_GREEN
+      elsif rows < 10_000  then COLOR_ORANGE
+      else                      COLOR_LIGHT_RED
       end
     end
   end

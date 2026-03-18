@@ -15,11 +15,12 @@ module RailsVitals
     end
 
     # Called by the sql.active_record subscriber
-    def add_query(sql:, duration_ms:, source:)
+    def add_query(sql:, duration_ms:, source:, binds: [])
       @queries << {
         sql:         sql,
         duration_ms: duration_ms,
         source:      source,
+        binds:       binds,
         called_at:   Time.now
       }
     end

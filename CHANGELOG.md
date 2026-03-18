@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-03-18
+
+### Added
+
+#### 🔬 EXPLAIN Visualizer
+- Added `ExplainAnalyzer` to run `EXPLAIN (FORMAT JSON, ANALYZE true)` for captured `SELECT` queries and produce:
+  - Execution-plan tree nodes with operation metadata and education copy
+  - Warning detection (sequential scan, sort without index, large nested loop)
+  - Actionable fix suggestions (including migration/command hints where applicable)
+  - Summary interpretation, total cost, actual time, and rows examined
+- Added `ExplainsController#show` and EXPLAIN views:
+  - `app/views/rails_vitals/explains/show.html.erb`
+  - `app/views/rails_vitals/explains/_plan_node.html.erb`
+- Added request-scoped EXPLAIN route:
+  - `GET /rails_vitals/requests/:request_id/explain/:query_index`
+- Added EXPLAIN entry point from Request Detail on `SELECT` queries.
+
+#### 🧩 UI Structure Improvements
+- Added shared JavaScript asset `app/assets/javascripts/rails_vitals/application.js`.
+- Moved inline page JS into shared functions (`toggleDna`, `toggleCard`, `toggleExplanation`, `selectNode`, `closePanel`).
+- Added stylesheet utility classes/components in `app/assets/stylesheets/rails_vitals/application.css`.
+- Included shared JS in the engine layout.
+
+#### 🤝 Community Docs
+- Added `CONTRIBUTING.md`.
+- Added `CODE_OF_CONDUCT.md`.
+
+### Changed
+
+- Query capture now persists bind values for each query (`Collector#add_query` + notifications subscriber) so EXPLAIN can analyze stored request SQL without requiring SQL in the URL.
+- README updated with EXPLAIN feature documentation and the new request-scoped route format.
+- Refactored multiple RailsVitals views to use shared CSS utilities and centralized JS behavior.
+
+### Fixed
+
+- Removed debug logging from `NPlusOnesController#index`.
+
+---
+
 ## [0.2.1] — 2026-03-13
 
 ### Added

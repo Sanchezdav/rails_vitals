@@ -1,0 +1,186 @@
+<style>
+  .plan-node {
+    border-left: 2px solid #4a5568;
+    margin-left: 16px;
+    padding-left: 16px;
+    margin-top: 8px;
+  }
+  .plan-node:first-child {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
+  .node-box {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .node-box:hover { opacity: 0.85; }
+</style>
+
+<%# Header %>
+<div class="mb-20">
+  <% if @record %>
+    <a href="<%= rails_vitals.request_path(@record.id) %>" class="text-blue" style="font-size:13px;">
+      ← Back to Request Detail
+    </a>
+  <% end %>
+
+  <h2 class="page-heading" style="margin:8px 0;">
+    EXPLAIN Visualizer
+  </h2>
+
+  <div class="mono text-grey text-sm word-break">
+    <%= @sql %>
+  </div>
+</div>
+
+<% if @result.error %>
+  <div
+    class="text-danger"
+    style="background:#2d1515;border:1px solid #fc818166;border-radius:6px;padding:16px;font-size:13px;"
+  >
+    <%= @result.error %>
+  </div>
+<% else %>
+  <%# Summary stats row %>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;">
+    <% stats = [
+        { label: "Total Cost",    value: @result.total_cost,               color: cost_color(@result.total_cost) },
+        { label: "Actual Time",   value: "#{@result.actual_time_ms}ms",    color: time_color(@result.actual_time_ms) },
+        { label: "Rows Examined", value: @result.rows_examined,            color: rows_color(@result.rows_examined) },
+        { label: "Warnings",      value: @result.warnings.size,            color: @result.warnings.any? ? "#fc8181" : "#68d391" },
+        { label: "Row Width",     value: "#{@result.plan&.plan_width}B",   color: @result.plan&.plan_width.to_i > 200 ? "#f6ad55" : "#68d391" }
+      ] %>
+
+    <% stats.each do |s| %>
+      <div class="stat-card-dark">
+        <div class="bold mono text-24" style="color:<%= s[:color] %>;">
+          <%= s[:value] %>
+        </div>
+        <div class="text-muted text-sm mt-4">
+          <%= s[:label] %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Warnings %>
+  <% if @result.warnings.any? %>
+    <div class="card mb-20">
+      <div class="card-title text-danger">
+        ⚠ Warnings (<%= @result.warnings.size %>)
+      </div>
+
+      <% @result.warnings.each do |w| %>
+        <% severity_color = w[:severity] == :danger ? "#fc8181" : "#f6ad55" %>
+
+        <div
+          style="background:#1a202c;border-left:3px solid <%= severity_color %>;
+                 border-radius:4px;padding:12px 16px;margin-bottom:8px;font-size:13px;"
+        >
+          <% case w[:type] %>
+          <% when :sequential_scan %>
+            <div class="bold mb-4" style="color:<%= severity_color %>;">
+              Sequential Scan on
+              <span class="mono"><%= w[:table] %></span>
+            </div>
+            <div class="text-muted">
+              Scanned <%= (w[:rows].to_i + w[:removed].to_i).to_s %> rows, returned
+              <%= w[:rows] %>, removed <%= w[:removed] || 0 %> by filter.
+              <% if w[:filter] %>
+                <span class="mono text-grey text-sm">Filter: <%= w[:filter] %></span>
+              <% end %>
+            </div>
+          <% when :sort_without_index %>
+            <div class="bold mb-4" style="color:<%= severity_color %>;">Sort without index</div>
+            <div class="text-muted">
+              PostgreSQL sorted rows in memory — ORDER BY column may lack an index.
+            </div>
+          <% when :large_nested_loop %>
+            <div class="bold mb-4" style="color:<%= severity_color %>;">
+              Large Nested Loop (<%= w[:rows] %> rows)
+            </div>
+            <div class="text-muted">
+              Nested Loop processed a large number of rows. Verify join columns are indexed.
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Fix suggestions %>
+  <% if @result.suggestions.any? %>
+    <div class="card mb-20">
+      <div class="card-title text-healthy">💡 Fix Suggestions</div>
+
+      <% @result.suggestions.each do |s| %>
+        <% s_color = s[:severity] == :danger ? "#fc8181" : "#f6ad55" %>
+
+        <div class="info-block mb-12">
+          <div class="bold mb-8" style="color:<%= s_color %>;font-size:13px;">
+            <%= s[:title] %>
+          </div>
+
+          <div class="text-muted mb-12 line-relaxed" style="font-size:13px;">
+            <%= s[:body] %>
+          </div>
+
+          <% if s[:migration] %>
+            <div class="mb-6">
+              <div class="mini-label">Migration</div>
+              <div class="code-block-dark text-healthy"><%= s[:migration] %></div>
+            </div>
+          <% end %>
+
+          <% if s[:command] %>
+            <div>
+              <div class="mini-label">Generate</div>
+              <div class="code-block-dark text-blue">$ <%= s[:command] %></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Interpretation summary %>
+  <% if @result.interpretation %>
+    <div
+      class="mb-16 line-relaxed"
+      style="
+        background:#1a202c;
+        border-radius:6px;
+        padding:12px 16px;
+        font-size:13px;
+        color:<%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
+        border-left:3px solid <%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
+      "
+    >
+      <%= @result.interpretation %>
+    </div>
+  <% end %>
+
+  <%# Plan tree %>
+  <div class="card">
+    <div class="card-title">
+      Execution Plan
+      <span class="text-muted text-sm ml-8" style="font-weight:normal;">click any node to expand explanation</span>
+    </div>
+
+    <div style="padding:8px 0;">
+      <%= render partial: "rails_vitals/explains/plan_node",
+                 locals: { node: @result.plan, depth: 0 } %>
+    </div>
+  </div>
+<% end %>
+
+<%# Push current URL into history so back-nav reuses the cached EXPLAIN result %>
+<script>
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, "", window.location.href);
+  }
+</script>

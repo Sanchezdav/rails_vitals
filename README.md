@@ -56,6 +56,11 @@ Each N+1 pattern has a detail page showing affected requests, estimated query sa
 
 ![Impact Simulator](https://github.com/user-attachments/assets/c6eaf195-7652-4319-bd15-476033e64896)
 
+### 🔬 EXPLAIN Visualizer
+Any `SELECT` query in Request Detail can be sent directly to PostgreSQL's `EXPLAIN ANALYZE`. The result is rendered as an interactive tree, each node shows its operation type, estimated cost, actual time, row estimates vs. reality, and loop count. Nodes are color-coded by cost. Click any node to expand an education card explaining what the operation does and when it becomes a problem.
+
+![EXPLAIN Visualizer](https://github.com/user-attachments/assets/e3547822-17ce-40e8-a468-714bbff01cd9)
+
 ### 🎭 Callback Map
 Every ActiveRecord callback (`before_save`, `after_create`, `before_validation`, etc.) is timed and grouped by model in the Request Detail view. Expensive callbacks surface immediately — including hidden side effects like callbacks that trigger additional queries.
 
@@ -143,6 +148,7 @@ Navigate to `/rails_vitals` to access the full admin interface.
 | Models | `/rails_vitals/models` | Per-model query breakdown |
 | N+1 Patterns | `/rails_vitals/n_plus_ones` | Cross-request N+1 aggregation with fix suggestions |
 | Association Map | `/rails_vitals/associations` | Live SVG model graph with N+1 and index annotations |
+| EXPLAIN Visualizer | `/rails_vitals/requests/:request_id/explain/:query_index` | Interactive PostgreSQL EXPLAIN ANALYZE tree with warnings and fix suggestions |
 
 ---
 

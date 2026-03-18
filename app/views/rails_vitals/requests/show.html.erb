@@ -210,7 +210,10 @@
               <% if q[:sql].strip.match?(/\ASELECT/i) %>
                 <div class="flex mb-8" style="justify-content:flex-end;">
                   <a
-                    href="<%= rails_vitals.explain_path(sql: q[:sql], request_id: @record.id) %>"
+                    href="<%= rails_vitals.explain_path(
+                      request_id:  @record.id,
+                      query_index: i
+                    ) %>"
                     target="_blank"
                     class="text-blue text-nowrap explain-btn"
                   >

@@ -5,7 +5,7 @@
   <%# Node box — clickable %>
   <div
     class="node-box"
-    onclick="toggleExplanation('<%= node_id %>')"
+    onclick="toggleExplanation(<%= j(node_id).to_json %>)"
     style="background:<%= meta[:color] %>18;border:1px solid <%= meta[:color] %>44;"
   >
     <div class="flex-between flex-wrap" style="gap:8px;">

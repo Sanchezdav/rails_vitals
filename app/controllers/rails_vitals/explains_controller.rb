@@ -1,17 +1,16 @@
 module RailsVitals
   class ExplainsController < ApplicationController
     def show
-      sql = params[:sql]
-      request_id = params[:request_id]
+      @record = RailsVitals.store.find(params[:request_id])
+      return render plain: "Request not found", status: :not_found unless @record
 
-      if sql.blank?
-        return render plain: "No SQL provided", status: :bad_request
-      end
+      @query_index = params[:query_index].to_i
+      query = @record.queries[@query_index]
+      return render plain: "Query not found", status: :not_found unless query
 
-      @sql = sql
-      @request_id = request_id
-      @record = request_id ? RailsVitals.store.find(request_id) : nil
-      @result = Analyzers::ExplainAnalyzer.analyze(sql)
+      @sql = query[:sql]
+      @binds = query[:binds] || []
+      @result = Analyzers::ExplainAnalyzer.analyze(@sql, binds: @binds)
     end
   end
 end

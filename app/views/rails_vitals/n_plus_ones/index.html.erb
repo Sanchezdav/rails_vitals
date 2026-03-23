@@ -15,6 +15,7 @@
           <th>Affected Endpoints</th>
           <th>Fix</th>
           <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -35,6 +36,13 @@
             <td>
               <%= link_to "Simulate →",
                     n_plus_one_path(pattern_id(p)),
+                    class: "text-accent" %>
+            </td>
+            <td>
+              <%= link_to "Try in Playground →",
+                    rails_vitals.playgrounds_path(
+                      expression: p[:fix_suggestion]&.dig(:code)
+                    ),
                     class: "text-accent" %>
             </td>
           </tr>

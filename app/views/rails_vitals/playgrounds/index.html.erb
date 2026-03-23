@@ -1,0 +1,289 @@
+<%# Header %>
+<div class="page-header">
+  <h2 class="page-heading mb-4">N+1 Fix Playground</h2>
+  <p class="page-subtitle">
+    Write any ActiveRecord query — see exactly what SQL fires against your real data.
+    <span class="text-grey">Read-only. Capped at 100 records.</span>
+  </p>
+</div>
+
+<%# Input form %>
+<div class="card mb-20">
+  <%= form_with url: rails_vitals.playgrounds_path,
+              method: :post,
+              local: true,
+              id: "playground-form" do |f| %>
+
+    <div class="mb-16">
+      <label class="section-label">Query</label>
+      <%= f.text_area :expression,
+            value:       params[:expression] || @default_query,
+            rows:        5,
+            placeholder: "Post.includes(:likes).where(published: true)",
+            class:       "playground-textarea" %>
+    </div>
+
+    <%# Association access — simulate iteration %>
+    <% if @available_assocs.any? %>
+      <div class="mb-16">
+        <div class="section-label">
+          Simulate access to associations
+          <span class="text-grey text-10 ml-6" style="font-weight:normal;text-transform:none;letter-spacing:normal;">
+            — checked associations will be loaded per record (triggers N+1 if not eager loaded)
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-8">
+          <% @available_assocs.each do |assoc| %>
+            <% checked = @prechecked_assocs.include?(assoc) %>
+            <label class="assoc-tag <%= checked ? 'assoc-tag-active' : '' %>"
+                   id="label_<%= assoc %>">
+              <input
+                type="checkbox"
+                name="access_associations[]"
+                value="<%= assoc %>"
+                checked
+                style="accent-color:#68d391;"
+                onchange="toggleAssocLabel(<%= j(assoc).to_json %>, this.checked)"
+              >
+              :<%= assoc %>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="text-grey text-sm mb-16">
+      ⚠ INSERT, UPDATE, DELETE, DROP are blocked.
+      Queries run against real data with a 100-record cap and 2s timeout.
+    </div>
+
+    <button type="submit" class="run-btn" id="run-btn">▶ Run</button>
+  <% end %>
+</div>
+
+<% if @result %>
+  <div class="result-fade">
+
+    <%# Error state %>
+    <% if @result.error %>
+      <div class="error-card">❌ <%= @result.error %></div>
+    <% else %>
+      <%# Before — older run %>
+      <div class="compare-box mb-16">
+        <div class="mini-label mb-6">← Before</div>
+        <div class="mono text-12 text-muted mb-8"><%= @previous[:expression] %></div>
+
+        <% if @previous[:access_associations]&.any? %>
+          <div class="flex flex-wrap gap-4 mb-8">
+            <% @previous[:access_associations].each do |a| %>
+              <span class="assoc-pill">:<%= a %></span>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div class="flex gap-16">
+          <div>
+            <span class="stat-value-22" style="color:<%= score_text_color(@previous[:score].to_i) %>;"><%= @previous[:score] %></span>
+            <span class="text-grey text-sm">score</span>
+          </div>
+          <div>
+            <span class="stat-value-22 text-blue"><%= @previous[:query_count] %></span>
+            <span class="text-grey text-sm">queries</span>
+          </div>
+          <div>
+            <span class="stat-value-22" style="color:<%= @previous[:n1_count].to_i > 0 ? '#fc8181' : '#68d391' %>;"><%= @previous[:n1_count] %></span>
+            <span class="text-grey text-sm">N+1</span>
+          </div>
+          <div>
+            <span class="stat-value-22 text-muted"><%= @previous[:duration_ms] %>ms</span>
+            <span class="text-grey text-sm">duration</span>
+          </div>
+        </div>
+      </div>
+
+      <%# Arrow + delta %>
+      <%
+        score_delta = @result.score.to_i - @previous[:score].to_i
+        query_delta = @result.query_count - @previous[:query_count].to_i
+        improved    = score_delta > 0 || (score_delta == 0 && @result.n1_patterns.size < @previous[:n1_count].to_i)
+        worsened    = score_delta < 0 || (score_delta == 0 && @result.n1_patterns.size > @previous[:n1_count].to_i)
+        arrow_color = improved ? "#68d391" : worsened ? "#fc8181" : "#4a5568"
+      %>
+      <div class="compare-arrow mb-16">
+        <div class="text-24" style="color:<%= arrow_color %>;">→</div>
+        <% if score_delta != 0 %>
+          <div class="compare-delta" style="color:<%= arrow_color %>;">
+            <%= score_delta > 0 ? "+" : "" %><%= score_delta %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# After — current run %>
+      <div class="compare-box-after" style="border:1px solid <%= arrow_color %>44;">
+        <div class="mini-label mb-6" style="color:<%= arrow_color %>;">After →</div>
+        <div class="mono text-12 text-muted mb-8"><%= @expression %></div>
+
+        <% if @prechecked_assocs&.any? %>
+          <div class="flex flex-wrap gap-4 mb-8">
+            <% @prechecked_assocs.each do |a| %>
+              <span class="assoc-pill-active">:<%= a %></span>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div class="flex gap-16">
+          <div>
+            <span class="stat-value-22" style="color:<%= score_text_color(@result.score.to_i) %>;"><%= @result.score %></span>
+            <span class="text-grey text-sm">score</span>
+          </div>
+          <div>
+            <span class="stat-value-22 text-blue"><%= @result.query_count %></span>
+            <span class="text-grey text-sm">queries</span>
+          </div>
+          <div>
+            <span class="stat-value-22" style="color:<%= @result.n1_patterns.size > 0 ? '#fc8181' : '#68d391' %>;"><%= @result.n1_patterns.size %></span>
+            <span class="text-grey text-sm">N+1</span>
+          </div>
+          <div>
+            <span class="stat-value-22 text-muted"><%= @result.duration_ms %>ms</span>
+            <span class="text-grey text-sm">duration</span>
+          </div>
+        </div>
+      </div>
+
+    <%# Summary line %>
+    <%
+      improved   = score_delta > 0 || (score_delta == 0 && @result.n1_patterns.size < @previous[:n1_count].to_i)
+      worsened   = score_delta < 0 || (score_delta == 0 && @result.n1_patterns.size > @previous[:n1_count].to_i)
+      icon       = improved ? "✅" : worsened ? "❌" : "—"
+      line_color = improved ? "#68d391" : worsened ? "#fc8181" : "#a0aec0"
+    %>
+    <div class="summary-line" style="color:<%= line_color %>;">
+      <%= icon %>
+      Score: <%= @previous[:score] %> → <%= @result.score %>
+      (<%= score_delta >= 0 ? "+" : "" %><%= score_delta %> pts) ·
+      Queries: <%= @previous[:query_count] %> → <%= @result.query_count %>
+      (<%= query_delta >= 0 ? "+" : "" %><%= query_delta %>) ·
+      N+1: <%= @previous[:n1_count] %> → <%= @result.n1_patterns.size %>
+    </div>
+
+    <%# Result stats grid %>
+    <%
+      r_stats = [
+        { label: "Queries Fired", value: @result.query_count,
+          color: @result.query_count > 25 ? "#fc8181" : @result.query_count > 10 ? "#f6ad55" : "#68d391" },
+        { label: "Score",         value: @result.score,
+          color: score_text_color(@result.score.to_i) },
+        { label: "N+1 Patterns",  value: @result.n1_patterns.size,
+          color: @result.n1_patterns.any? ? "#fc8181" : "#68d391" },
+        { label: "Duration",      value: "#{@result.duration_ms}ms",
+          color: "#a0aec0" }
+      ]
+    %>
+    <div class="grid-4">
+      <% r_stats.each do |s| %>
+        <div class="stat-grid-box">
+          <div class="stat-value-xl bold mono" style="color:<%= s[:color] %>;"><%= s[:value] %></div>
+          <div class="text-muted text-sm mt-4"><%= s[:label] %></div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# N+1 detected %>
+    <% if @result.n1_patterns.any? %>
+      <div class="n1-alert">
+        <div class="text-danger text-12 bold mb-8">
+          N+1 Patterns Detected (<%= @result.n1_patterns.size %>)
+        </div>
+        <% @result.n1_patterns.each do |p| %>
+          <div class="mono text-sm text-danger mb-4">
+            <%= p[:count] %>× — <%= truncate(p[:pattern], length: 100) %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Queries + DNA %>
+    <div class="card">
+      <div class="card-title">
+        Queries Fired
+        <span class="card-title-description">click any row to expand Query DNA</span>
+      </div>
+
+      <% if @query_dna.empty? %>
+        <div class="text-grey" style="font-size:13px;padding:8px 0;">
+          No queries fired — the relation was not loaded or returned no results.
+        </div>
+      <% else %>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>SQL</th>
+              <th>Time</th>
+              <th>Complexity</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @query_dna.each_with_index do |item, i| %>
+              <% q      = item[:query] %>
+              <% dna    = item[:dna] %>
+              <% dna_id = "pg_dna_#{i}" %>
+
+              <tr onclick="toggleDna(<%= dna_id.to_json %>)" class="cursor-pointer">
+                <td class="text-muted"><%= i + 1 %></td>
+                <td class="truncate mono text-sm text-primary" style="max-width:400px;"><%= q[:sql] %></td>
+                <td style="color:<%= time_heat_color(q[:duration_ms]) %>;"><%= q[:duration_ms] %>ms</td>
+                <td>
+                  <span style="color:<%= dna.complexity_label[:color] %>;" class="text-12">
+                    <%= dna.complexity_label[:label] %>
+                    <span class="text-muted text-10">(<%= dna.complexity %>/10)</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-12 text-upper" style="color:<%= risk_color(dna.risk) %>;">
+                    <%= dna.risk %>
+                  </span>
+                </td>
+              </tr>
+
+              <%# DNA expansion panel %>
+              <tr id="<%= dna_id %>" class="d-none">
+                <td colspan="5" style="padding:0;">
+                  <div class="dna-panel">
+                    <pre class="code-block mb-12"><%= q[:sql] %></pre>
+
+                    <div class="flex flex-wrap gap-6 mb-12">
+                      <% dna.tokens.each do |token| %>
+                        <span onclick="toggleCard(<%= "card_#{dna_id}_#{token[:type]}".to_json %>);event.stopPropagation();"
+                              style="background:<%= token[:color] %>22;color:<%= token[:color] %>;border:1px solid <%= token[:color] %>66;padding:3px 10px;border-radius:4px;font-size:12px;font-family:monospace;cursor:pointer;">
+                          <%= token[:label] %>
+                        </span>
+                      <% end %>
+                    </div>
+
+                    <% dna.tokens.each do |token| %>
+                      <div id="card_<%= dna_id %>_<%= token[:type] %>" class="d-none mb-8">
+                        <div style="background:#2d3748;border-left:3px solid <%= token[:color] %>;border-radius:4px;padding:12px 16px;">
+                          <div class="mono bold text-sm mb-6" style="color:<%= token[:color] %>;">
+                            💡 <%= token[:label] %>
+                          </div>
+                          <div class="text-primary line-relaxed" style="font-size:13px;">
+                            <%= token[:explanation] %>
+                          </div>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+
+    <% end %><%# closes if @result.error %>
+  </div><%# closes .result-fade in the error case %>
+<% end %>

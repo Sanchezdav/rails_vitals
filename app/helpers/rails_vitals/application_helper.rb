@@ -87,5 +87,25 @@ module RailsVitals
       else                      COLOR_LIGHT_RED
       end
     end
+
+    # Returns a hex color for a DNA risk level symbol (:healthy, :neutral, :warning, :danger)
+    def risk_color(risk)
+      {
+        healthy: COLOR_LIGHT_GREEN,
+        neutral: COLOR_NEUTRAL,
+        warning: COLOR_ORANGE,
+        danger:  COLOR_LIGHT_RED
+      }[risk.to_sym] || COLOR_NEUTRAL
+    end
+
+    # Returns a readable hex text color for a numeric health score (0-100)
+    def score_text_color(score)
+      case score.to_i
+      when 90..100 then COLOR_LIGHT_GREEN
+      when 70..89  then "#4299e1"
+      when 50..69  then COLOR_ORANGE
+      else              COLOR_LIGHT_RED
+      end
+    end
   end
 end

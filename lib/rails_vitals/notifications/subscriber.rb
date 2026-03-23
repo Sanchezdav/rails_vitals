@@ -6,6 +6,20 @@ module RailsVitals
         attach_action_controller_subscriber
       end
 
+      # Skip Rails internal queries — schema lookups, explain, etc.
+      def self.internal_query?(sql)
+        sql =~ /\A\s*(SCHEMA|EXPLAIN|PRAGMA|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i ||
+        sql.include?("pg_class") ||
+        sql.include?("pg_attribute") ||
+        sql.include?("pg_type") ||
+        sql.include?("t.typname") ||
+        sql.include?("t.oid") ||
+        sql.include?("information_schema") ||
+        sql.include?("pg_namespace") ||
+        sql.include?("SHOW search_path") ||
+        sql.include?("SHOW max_identifier_length")
+      end
+
       private_class_method def self.attach_sql_subscriber
         ActiveSupport::Notifications.subscribe("sql.active_record") do |event|
           next unless RailsVitals.config.enabled
@@ -30,20 +44,6 @@ module RailsVitals
 
           collector.finalize!(event)
         end
-      end
-
-      # Skip Rails internal queries — schema lookups, explain, etc.
-      private_class_method def self.internal_query?(sql)
-        sql =~ /\A\s*(SCHEMA|EXPLAIN|PRAGMA|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i ||
-        sql.include?("pg_class") ||
-        sql.include?("pg_attribute") ||
-        sql.include?("pg_type") ||
-        sql.include?("t.typname") ||
-        sql.include?("t.oid") ||
-        sql.include?("information_schema") ||
-        sql.include?("pg_namespace") ||
-        sql.include?("SHOW search_path") ||
-        sql.include?("SHOW max_identifier_length")
       end
 
       private_class_method def self.rails_vitals_request?

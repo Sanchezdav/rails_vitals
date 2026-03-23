@@ -61,6 +61,11 @@ Any `SELECT` query in Request Detail can be sent directly to PostgreSQL's `EXPLA
 
 ![EXPLAIN Visualizer](https://github.com/user-attachments/assets/e3547822-17ce-40e8-a468-714bbff01cd9)
 
+### 🧪 N+1 Fix Playground
+Try eager-loading fixes against your real app data before changing application code. Enter any ActiveRecord expression such as `Post.includes(:likes)`, optionally simulate association access to reproduce N+1 behavior, and RailsVitals runs it in a read-only sandbox with a 100-record cap and 2s timeout. Each run compares before vs. after score, query count, duration, and N+1 count, then shows the exact SQL fired with full Query DNA so you can verify that the fix actually batches queries.
+
+![Playground](https://github.com/user-attachments/assets/7df1bfbe-1576-4048-810d-465e52115d19)
+
 ### 🎭 Callback Map
 Every ActiveRecord callback (`before_save`, `after_create`, `before_validation`, etc.) is timed and grouped by model in the Request Detail view. Expensive callbacks surface immediately — including hidden side effects like callbacks that trigger additional queries.
 
@@ -149,6 +154,7 @@ Navigate to `/rails_vitals` to access the full admin interface.
 | N+1 Patterns | `/rails_vitals/n_plus_ones` | Cross-request N+1 aggregation with fix suggestions |
 | Association Map | `/rails_vitals/associations` | Live SVG model graph with N+1 and index annotations |
 | EXPLAIN Visualizer | `/rails_vitals/requests/:request_id/explain/:query_index` | Interactive PostgreSQL EXPLAIN ANALYZE tree with warnings and fix suggestions |
+| Playground | `/rails_vitals/playgrounds` | Read-only sandbox for testing eager-loading fixes against real app data |
 
 ---
 

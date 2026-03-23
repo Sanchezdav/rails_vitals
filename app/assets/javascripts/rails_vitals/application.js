@@ -159,3 +159,32 @@ function badge(color, text) {
          'font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;">' +
          text + '</span>';
 }
+
+// ─── playgrounds/index ───────────────────────────────────────────────────────
+(function () {
+  var form = document.getElementById('playground-form');
+  if (!form) return;
+
+  // Disable the run button on submit to prevent double-runs
+  form.addEventListener('submit', function () {
+    var btn = document.getElementById('run-btn');
+    if (btn) {
+      btn.disabled    = true;
+      btn.textContent = '⏳ Running...';
+    }
+  });
+
+  // Pre-fill expression textarea from ?expression= URL param (deep-link from N+1 page)
+  var params = new URLSearchParams(window.location.search);
+  var expr   = params.get('expression');
+  if (expr) {
+    var ta = document.querySelector("textarea[name='expression']");
+    if (ta) ta.value = decodeURIComponent(expr);
+  }
+}());
+
+function toggleAssocLabel(assoc, checked) {
+  var label = document.getElementById('label_' + assoc);
+  if (!label) return;
+  label.classList.toggle('assoc-tag-active', checked);
+}

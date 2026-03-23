@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] — 2026-03-23
+
+### Added
+
+#### 🧪 N+1 Fix Playground
+- Added `PlaygroundsController` and `Playground::Sandbox` for running read-only ActiveRecord expressions against real app data inside RailsVitals.
+- Added Playground UI at `GET /rails_vitals/playgrounds` with:
+  - Query input for ActiveRecord expressions
+  - Optional association-access simulation to surface N+1 behavior
+  - Before/after comparison of score, query count, N+1 count, and duration
+  - Query DNA breakdown for SQL fired by sandbox runs
+- Added `POST /rails_vitals/playgrounds` to evaluate sandbox runs with a 100-record cap and 2s timeout.
+- Added deep-link from N+1 Patterns to open a suggested fix directly in the Playground.
+
+#### ✅ Test Coverage
+- Added controller tests for EXPLAIN and Playground flows.
+- Added analyzer tests for `ExplainAnalyzer`.
+- Added sandbox tests for Playground guardrails, query normalization, and scoring.
+
+### Changed
+
+- Navigation now includes a dedicated Playground entry in the RailsVitals admin UI.
+- SQL notification filtering explicitly skips internal queries such as `EXPLAIN`, schema lookups, and transaction control statements.
+
+### Fixed
+
+- Normalized badge rendering in Request Detail to avoid malformed class output.
+
+---
+
 ## [0.3.0] — 2026-03-18
 
 ### Added

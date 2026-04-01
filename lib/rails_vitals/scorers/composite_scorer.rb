@@ -3,14 +3,14 @@ module RailsVitals
     class CompositeScorer < BaseScorer
       # Weights will grow as we add more scorers
       WEIGHTS = {
-        query:      0.40,
+        query: 0.40,
         n_plus_one: 0.60
       }.freeze
 
       def score
         clamp(
-          (QueryScorer.new(@collector).score     * WEIGHTS[:query]).round +
-          (NPlusOneScorer.new(@collector).score  * WEIGHTS[:n_plus_one]).round
+          (QueryScorer.new(@collector).score * WEIGHTS[:query]).round +
+          (NPlusOneScorer.new(@collector).score * WEIGHTS[:n_plus_one]).round
         )
       end
 

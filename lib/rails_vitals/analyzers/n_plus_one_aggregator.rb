@@ -4,11 +4,11 @@ module RailsVitals
       def self.aggregate(records)
         pattern_data = Hash.new do |h, k|
           h[k] = {
-            pattern:      k,
-            occurrences:  0,
-            endpoints:    Hash.new(0),
-            table:        nil,
-            foreign_key:  nil
+            pattern: k,
+            occurrences: 0,
+            endpoints: Hash.new(0),
+            table: nil,
+            foreign_key: nil
           }
         end
 
@@ -17,11 +17,11 @@ module RailsVitals
 
           record.n_plus_one_patterns.each do |sql, count|
             normalized = normalize(sql)
-            Rails.logger.debug "Processing SQL: #{sql} → normalized: #{normalized}"
+            Rails.logger.debug "#{self.name}: Processing SQL: #{sql} → normalized: #{normalized}"
 
             pattern_data[normalized][:occurrences] += count
             pattern_data[normalized][:endpoints][record.endpoint] += 1
-            pattern_data[normalized][:table]       ||= extract_table(sql)
+            pattern_data[normalized][:table] ||= extract_table(sql)
             pattern_data[normalized][:foreign_key] ||= extract_foreign_key(sql)
           end
         end
@@ -39,7 +39,7 @@ module RailsVitals
 
       def self.normalize(sql)
         sql
-          .gsub('\\"', '"')      # unescape stored escaped quotes
+          .gsub('\\"', '"') # unescape stored escaped quotes
           .gsub(/\b\d+\b/, "?")
           .gsub(/'[^']*'/, "?")
           .gsub(/\s+/, " ")
@@ -57,7 +57,7 @@ module RailsVitals
       end
 
       def self.build_suggestion(pattern)
-        table       = pattern[:table]
+        table = pattern[:table]
         foreign_key = pattern[:foreign_key]
 
         return generic_suggestion(table) unless table && foreign_key
@@ -68,9 +68,9 @@ module RailsVitals
 
         if owner_model && assoc_name
           {
-            code:        "#{owner_model}.includes(:#{assoc_name})",
+            code: "#{owner_model}.includes(:#{assoc_name})",
             description: "Eager load :#{assoc_name} on #{owner_model} to eliminate this N+1",
-            owner:       owner_model,
+            owner: owner_model,
             association: assoc_name
           }
         else
@@ -105,9 +105,9 @@ module RailsVitals
 
       def self.generic_suggestion(table)
         {
-          code:        "includes(:#{table&.singularize})",
+          code: "includes(:#{table&.singularize})",
           description: "Use includes(), eager_load(), or preload() to batch this query",
-          owner:       nil,
+          owner: nil,
           association: table&.singularize
         }
       end

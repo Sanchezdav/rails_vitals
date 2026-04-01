@@ -6,20 +6,20 @@ module RailsVitals
                 :callbacks, :total_callback_time_ms, :recorded_at
 
     def initialize(collector:, scorer:)
-      @id                  = SecureRandom.hex(8)
-      @controller          = collector.controller
-      @action              = collector.action
-      @http_method         = collector.http_method
-      @response_status     = collector.response_status
-      @duration_ms         = collector.duration_ms
-      @queries             = collector.queries
-      @callbacks           = collector.callbacks
+      @id = SecureRandom.hex(8)
+      @controller = collector.controller
+      @action = collector.action
+      @http_method = collector.http_method
+      @response_status = collector.response_status
+      @duration_ms = collector.duration_ms
+      @queries = collector.queries
+      @callbacks = collector.callbacks
       @total_callback_time_ms = collector.total_callback_time_ms
-      @score               = scorer.score
-      @label               = scorer.label
-      @color               = scorer.color
+      @score = scorer.score
+      @label = scorer.label
+      @color = scorer.color
       @n_plus_one_patterns = build_n_plus_one_patterns(scorer)
-      @recorded_at         = Time.now
+      @recorded_at = Time.now
     end
 
     def endpoint

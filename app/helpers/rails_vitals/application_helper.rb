@@ -11,13 +11,19 @@ module RailsVitals
     COLOR_ORANGE = "#f6ad55"
     COLOR_LIGHT_GREEN = "#68d391"
 
-    def score_color(color)
+    # Module-level helper so plain Ruby classes (e.g. PanelRenderer) can resolve
+    # a score color without needing a helper instance.
+    def self.score_color_for(color)
       case color
       when "green" then COLOR_GREEN
       when "blue"  then COLOR_BLUE
       when "amber" then COLOR_AMBER
       else              COLOR_RED
       end
+    end
+
+    def score_color(color)
+      RailsVitals::ApplicationHelper.score_color_for(color)
     end
 
     def score_label_to_color(score)

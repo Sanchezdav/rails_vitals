@@ -7,7 +7,7 @@ module RailsVitals
 
     def initialize(collector, scorer)
       @collector = collector
-      @scorer    = scorer
+      @scorer = scorer
     end
 
     def render
@@ -132,10 +132,11 @@ module RailsVitals
       return "" if queries.empty?
 
       rows = queries.map do |q|
-        sql     = truncate(q[:sql], 45)
+        sql = truncate(q[:sql], 45)
         time_ms = q[:duration_ms].round(1)
+
         <<~HTML
-          <div style="margin-bottom:6px;">
+          <div style="margin-bottom:8px;">
             <div style="color:#90cdf4;font-size:11px;">#{escape(sql)}</div>
             <div style="color:#68d391;font-size:10px;">#{time_ms}ms</div>
           </div>
@@ -189,12 +190,7 @@ module RailsVitals
     end
 
     def score_bg
-      case @scorer.color
-      when "green" then "#276749"
-      when "blue"  then "#2b6cb0"
-      when "amber" then "#b7791f"
-      else              "#c53030"
-      end
+      RailsVitals::ApplicationHelper.score_color_for(@scorer.color)
     end
 
     def n_plus_one_scorer
@@ -216,8 +212,8 @@ module RailsVitals
         <script>
           function rvToggle() {
             var expanded = document.getElementById('rv-expanded');
-            var badge    = document.getElementById('rv-badge');
-            var arrow    = badge.querySelector('span:last-child');
+            var badge = document.getElementById('rv-badge');
+            var arrow = badge.querySelector('span:last-child');
             if (expanded.style.display === 'none') {
               expanded.style.display = 'block';
               arrow.textContent = '▼';

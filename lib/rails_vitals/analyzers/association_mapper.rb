@@ -104,7 +104,7 @@ module RailsVitals
         canvas_h = 120 + (by_depth.keys.max || 0) * 160
 
         by_depth.each do |depth, layer_nodes|
-          count  = layer_nodes.size
+          count = layer_nodes.size
           x_step = canvas_w / (count + 1)
           layer_nodes.each_with_index do |node, i|
             node.position = {

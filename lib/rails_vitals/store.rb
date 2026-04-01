@@ -1,9 +1,9 @@
 module RailsVitals
   class Store
     def initialize(size)
-      @size    = size
+      @size = size
       @records = []
-      @mutex   = Mutex.new
+      @mutex = Mutex.new
     end
 
     def push(record)

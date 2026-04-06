@@ -1,0 +1,15 @@
+<div class="page-header">
+  <% if local_assigns[:back_path] %>
+    <div class="mb-8">
+      <%= link_to local_assigns.fetch(:back_label, "← Back"), back_path, class: "back-link" %>
+    </div>
+  <% end %>
+  <h1 class="page-heading">
+    <%= title %>
+  </h1>
+  <% if local_assigns[:subtitle] %>
+    <p class="page-subtitle">
+      <%= subtitle %>
+    </p>
+  <% end %>
+</div>

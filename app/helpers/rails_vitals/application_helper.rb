@@ -113,5 +113,21 @@ module RailsVitals
       else              COLOR_LIGHT_RED
       end
     end
+
+    # Returns the full badge CSS class string for a score color label.
+    def badge_class(color)
+      "badge badge-#{color}"
+    end
+
+    def format_ms(value)
+      return "0ms" unless value
+
+      "#{value.to_f.round(1)}ms"
+    end
+
+    # Calculates a percentage of count over total, returning 0 when total is zero.
+    def percentage(count, total)
+      total.to_f > 0 ? ((count.to_f / total) * 100).round(1) : 0
+    end
   end
 end

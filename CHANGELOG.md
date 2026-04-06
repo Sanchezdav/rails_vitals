@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1] — 2026-04-05
+
+### Changed
+
+- Extracted reusable view partials into `app/views/rails_vitals/shared/`: `_page_header`, `_empty_state`, `_score_badge`, `_n1_indicator` — all views now use these instead of duplicating markup.
+- Added `badge_class(color)`, `format_ms(value)`, and `percentage(count, total)` helper methods to `ApplicationHelper`; views no longer compute formatting or percentages inline.
+- Extracted `ApplicationHelper.score_color_for` as a module-level method so plain Ruby classes (e.g. `PanelRenderer`) can resolve score colors without a helper instance.
+- Moved plan node, score display, and EXPLAIN interpretation CSS from inline `<style>` blocks into `application.css`.
+- Replaced inline JS string interpolation with `.to_json` calls in views to prevent XSS.
+- Normalized hash alignment style across the codebase to comply with RuboCop defaults.
+
+---
+
 ## [0.4.0] — 2026-03-23
 
 ### Added

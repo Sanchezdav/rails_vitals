@@ -282,12 +282,21 @@ rails_vitals/
         ├── models/
         ├── n_plus_ones/
         ├── associations/
-        └── live/
+        ├── explains/
+        ├── playgrounds/
+        └── shared/                            # Reusable partials
+            ├── _page_header.html.erb
+            ├── _empty_state.html.erb
+            ├── _score_badge.html.erb
+            └── _n1_indicator.html.erb
 ```
 
 **Key architectural decisions:**
 
 - **Zero JS dependencies** — no Chartkick, no D3, no Chart.js. Tables for data, SVG for diagrams, vanilla JS for interactions.
+- **Single CSS/JS asset file** — all styles in `app/assets/stylesheets/rails_vitals/application.css`, all behaviour in `app/assets/javascripts/rails_vitals/application.js`. No inline `<style>` or `<script>` blocks in views.
+- **Shared view partials** — common UI patterns (`_page_header`, `_empty_state`, `_score_badge`, `_n1_indicator`) live in `app/views/rails_vitals/shared/` and are reused across all views.
+- **Centralised helpers** — all color logic, heat colors, and formatting live in `ApplicationHelper`. Views never define inline color hashes or call `.round(1).to_s + "ms"` directly; they use `format_ms()`, `risk_color()`, `badge_class()`, etc.
 - **Thread-local Collector** — instrumentation state is stored per-thread, never shared between concurrent requests.
 - **In-memory ring buffer** — the Store keeps the last N requests in memory. No database writes, no schema migrations.
 - **Module prepend for callbacks** — callback instrumentation wraps `ActiveRecord::Base#run_callbacks` via `Module#prepend`. No TracePoint, no monkey-patching.

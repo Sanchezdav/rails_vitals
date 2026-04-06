@@ -64,10 +64,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. Create a controller in `app/controllers/rails_vitals/` (inherit from `ApplicationController`)
 2. Add route(s) in `config/routes.rb` (scoped under the engine's routing namespace)
 3. Create views in `app/views/rails_vitals/your_controller/`
-4. Add nav link in `app/views/layouts/rails_vitals/application.html.erb`
-5. Test the controller with integration tests; use stub Store/Analyzer calls
+4. Use shared partials from `app/views/rails_vitals/shared/` where applicable (see below)
+5. Add nav link in `app/views/layouts/rails_vitals/application.html.erb`
+6. Test the controller with integration tests; use stub Store/Analyzer calls
 
-### Adding a scorer
+### Shared view partials
+
+Reusable UI components live in `app/views/rails_vitals/shared/`. Always prefer these over duplicating markup.
+
+| Partial | Locals | Description |
+|---|---|---|
+| `_page_header` | `title:`, optional `subtitle:`, `back_path:`, `back_label:` | Standard page heading with optional subtitle and back link |
+| `_empty_state` | `message:` | Full-width "no data" card |
+| `_score_badge` | `color:`, `score:`, optional `label:` | Colored score badge pill |
+| `_n1_indicator` | `patterns:`, optional `suffix:`, `none_label:` | N+1 count badge or "None" span |
+
+**Usage example:**
+```erb
+<%= render "rails_vitals/shared/page_header",
+           title: "My Page",
+           subtitle: "#{@total} items",
+           back_path: rails_vitals.root_path,
+           back_label: "← Dashboard" %>
+
+<%= render "rails_vitals/shared/score_badge", color: r.color, score: r.score %>
+
+<%= render "rails_vitals/shared/n1_indicator",
+           patterns: r.n_plus_one_patterns,
+           suffix: "detected",
+           none_label: "None detected" %>
+
+<%= render "rails_vitals/shared/empty_state", message: "No data yet." %>
+```
+
+### View helpers (`ApplicationHelper`)
+
+All helper methods and color constants live in `app/helpers/rails_vitals/application_helper.rb`.
+
+| Helper | Returns | Use for |
+|---|---|---|
+| `badge_class(color)` | `"badge badge-healthy"` etc. | Full class string for score badge `<span>` |
+| `score_color(color)` | hex string | Score number text color |
+| `score_label_to_color(score)` | `"healthy"` / `"acceptable"` / `"warning"` / `"critical"` | CSS class suffix for a numeric score |
+| `risk_color(risk)` | hex string | DNA token risk color (`:healthy`, `:warning`, etc.) |
+| `callback_color(kind)` | hex string | Callback badge background |
+| `query_heat_color(count)` | hex string | Query count heat color |
+| `time_heat_color(ms)` | hex string | DB time heat color |
+| `n1_heat_color(pct)` | hex string | N+1 frequency heat color |
+| `format_ms(value)` | `"12.3ms"` | Unified millisecond formatting; nil-safe |
+| `percentage(count, total)` | `42.5` | Safe percentage (returns 0 when total is zero) |
+
+Color constants (`COLOR_GREEN`, `COLOR_RED`, etc.) are defined at the top of the module. Use these in helpers instead of hardcoding hex values. The module-level `ApplicationHelper.score_color_for(color)` method allows plain Ruby classes (e.g. `PanelRenderer`) to resolve score colors without a helper instance.
 
 1. Create a class in `lib/rails_vitals/scorers/` that inherits from `BaseScorer`
 2. Implement `score(request_record)` → returns 0–100 Integer
@@ -81,6 +128,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **SQL normalization**: Bind values are replaced with `?` for fingerprinting; exact value matching won't work
 - **Test isolation**: Always wrap stubs with `with_stub` or use `Struct.new` doubles; don't modify global state
 - **EXPLAIN availability**: Only works on `SELECT` queries in development/test; wrapped in safe guards in `ExplainAnalyzer`
+- **Inline styles**: Dynamic ERB values (colors from runtime data like `token[:color]`) must stay inline. All static colors belong in `ApplicationHelper` constants and helper methods. Never define `risk_colors` or similar hashes in views.
+- **Class attribute interpolation**: Avoid `class="badge-<%= color %>"`. Use a helper method (`badge_class(color)`) so the entire class string is a single ERB expression: `class="<%= badge_class(color) %>"`.
 
 ## Commands
 

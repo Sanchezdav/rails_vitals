@@ -1,4 +1,4 @@
-<div class="page-title">Dashboard</div>
+<%= render "rails_vitals/shared/page_header", title: "Dashboard" %>
 
 <div class="grid-3">
   <div class="stat-card">
@@ -34,20 +34,14 @@
         <tr>
           <td><%= r.endpoint %></td>
           <td>
-            <span class="badge badge-<%= r.color %>">
-              <%= r.score %> <%= r.label %>
-            </span>
+            <%= render "rails_vitals/shared/score_badge", color: r.color, score: r.score, label: r.label %>
           </td>
           <td><%= r.total_query_count %></td>
-          <td><%= r.total_db_time_ms.round(1) %>ms</td>
+          <td><%= format_ms(r.total_db_time_ms) %></td>
           <td>
-            <% if r.n_plus_one_patterns.any? %>
-              <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
-            <% else %>
-              <span class="text-healthy">None</span>
-            <% end %>
+            <%= render "rails_vitals/shared/n1_indicator", patterns: r.n_plus_one_patterns %>
           </td>
-          <td><%= r.duration_ms&.round(1) %>ms</td>
+          <td><%= format_ms(r.duration_ms) %></td>
           <td><%= link_to "→", rails_vitals.request_path(r.id) %></td>
         </tr>
       <% end %>
@@ -74,7 +68,7 @@
           <td><%= stats[:count] %></td>
           <td><%= stats[:avg_score] %></td>
           <td><%= stats[:avg_queries] %></td>
-          <td><%= stats[:avg_db_time_ms].round(1) %>ms</td>
+          <td><%= format_ms(stats[:avg_db_time_ms]) %></td>
         </tr>
       <% end %>
     </tbody>
@@ -100,7 +94,7 @@
               <td><%= label %></td>
               <td><%= count %></td>
               <td class="text-muted">
-                <%= @total > 0 ? ((count.to_f / @total) * 100).round(1) : 0 %>%
+                <%= percentage(count, @total) %>%
               </td>
             </tr>
           <% end %>
@@ -122,9 +116,7 @@
             <tr>
               <td class="text-muted text-sm"><%= endpoint %></td>
               <td>
-                <span class="badge badge-<%= score_label_to_color(score) %>">
-                  <%= score %>
-                </span>
+                <%= render "rails_vitals/shared/score_badge", color: score_label_to_color(score), score: score %>
               </td>
             </tr>
           <% end %>

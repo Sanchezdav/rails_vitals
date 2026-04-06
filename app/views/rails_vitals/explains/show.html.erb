@@ -1,34 +1,12 @@
-<style>
-  .plan-node {
-    border-left: 2px solid #4a5568;
-    margin-left: 16px;
-    padding-left: 16px;
-    margin-top: 8px;
-  }
-  .plan-node:first-child {
-    margin-left: 0;
-    padding-left: 0;
-    border-left: none;
-  }
-  .node-box {
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin-bottom: 4px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-  .node-box:hover { opacity: 0.85; }
-</style>
-
 <%# Header %>
 <div class="mb-20">
   <% if @record %>
-    <a href="<%= rails_vitals.request_path(@record.id) %>" class="text-blue" style="font-size:13px;">
-      ← Back to Request Detail
-    </a>
+    <%= link_to "← Back to Request Detail",
+                rails_vitals.request_path(@record.id),
+                class: "back-link text-sm" %>
   <% end %>
 
-  <h2 class="page-heading" style="margin:8px 0;">
+  <h2 class="page-heading mb-8">
     EXPLAIN Visualizer
   </h2>
 
@@ -38,15 +16,12 @@
 </div>
 
 <% if @result.error %>
-  <div
-    class="text-danger"
-    style="background:#2d1515;border:1px solid #fc818166;border-radius:6px;padding:16px;font-size:13px;"
-  >
+  <div class="error-card">
     <%= @result.error %>
   </div>
 <% else %>
   <%# Summary stats row %>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;">
+  <div class="grid-5">
     <% stats = [
         { label: "Total Cost",    value: @result.total_cost,               color: cost_color(@result.total_cost) },
         { label: "Actual Time",   value: "#{@result.actual_time_ms}ms",    color: time_color(@result.actual_time_ms) },
@@ -149,16 +124,10 @@
 
   <%# Interpretation summary %>
   <% if @result.interpretation %>
+    <% interp_color = @result.warnings.any? ? "#f6ad55" : "#68d391" %>
     <div
-      class="mb-16 line-relaxed"
-      style="
-        background:#1a202c;
-        border-radius:6px;
-        padding:12px 16px;
-        font-size:13px;
-        color:<%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
-        border-left:3px solid <%= @result.warnings.any? ? '#f6ad55' : '#68d391' %>;
-      "
+      class="interpret-block mb-16 line-relaxed"
+      style="color:<%= interp_color %>;border-left:3px solid <%= interp_color %>;"
     >
       <%= @result.interpretation %>
     </div>

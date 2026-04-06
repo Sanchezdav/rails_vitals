@@ -29,7 +29,7 @@
                     class: "text-accent" %>
             </td>
             <td>
-              <span class="badge badge-<%= color %>">
+              <span class="<%= badge_class(color) %>">
                 <%= row[:avg_score] %>
               </span>
             </td>
@@ -60,7 +60,6 @@
     </table>
   </div>
 <% else %>
-  <div class="card empty-state">
-    No requests recorded yet. Visit your app to generate data.
-  </div>
+  <%= render "rails_vitals/shared/empty_state",
+             message: "No requests recorded yet. Visit your app to generate data." %>
 <% end %>

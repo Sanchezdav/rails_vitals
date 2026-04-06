@@ -1,18 +1,20 @@
-<div class="flex-center mb-20" style="gap:16px;">
-  <%= link_to "← Back", rails_vitals.requests_path, class: "back-link" %>
-  <div class="page-title" style="margin:0;">Request Detail</div>
+<div class="page-header">
+  <div class="mb-8">
+    <%= link_to "← Back", rails_vitals.requests_path, class: "back-link" %>
+  </div>
+  <h1 class="page-heading">Request Detail</h1>
 </div>
 
 <%# Header %>
 <div class="card flex-between">
   <div>
-    <div class="bold" style="font-size:42px;color:<%= score_color(@record.color) %>;">
+    <div class="score-display" style="color:<%= score_color(@record.color) %>;">
       <%= @record.score %>
       <span class="text-muted" style="font-size:16px;">/ 100</span>
     </div>
   </div>
   <div class="text-right">
-    <span class="<%= "badge badge-#{@record.color}" %>" style="font-size:13px;padding:4px 14px;">
+    <span class="<%= badge_class(@record.color) %>" style="font-size:13px;padding:4px 14px;">
       <%= @record.label %>
     </span>
     <div class="text-muted text-sm mt-6"><%= @record.recorded_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
@@ -27,7 +29,7 @@
       <tr><td class="text-muted" style="width:140px;">Endpoint</td><td><%= @record.endpoint %></td></tr>
       <tr><td class="text-muted">Method</td>  <td><%= @record.http_method %></td></tr>
       <tr><td class="text-muted">Status</td>  <td><%= @record.response_status %></td></tr>
-      <tr><td class="text-muted">Duration</td><td><%= @record.duration_ms&.round(1) %>ms</td></tr>
+      <tr><td class="text-muted">Duration</td><td><%= format_ms(@record.duration_ms) %></td></tr>
     </tbody>
   </table>
 </div>
@@ -38,15 +40,14 @@
   <table>
     <tbody>
       <tr><td class="text-muted" style="width:140px;">Total Queries</td><td><%= @record.total_query_count %></td></tr>
-      <tr><td class="text-muted">DB Time</td>     <td><%= @record.total_db_time_ms.round(1) %>ms</td></tr>
+      <tr><td class="text-muted">DB Time</td>     <td><%= format_ms(@record.total_db_time_ms) %></td></tr>
       <tr>
         <td class="text-muted">N+1 Patterns</td>
         <td>
-          <% if @record.n_plus_one_patterns.any? %>
-            <span class="n1-badge"><%= @record.n_plus_one_patterns.size %> detected</span>
-          <% else %>
-            <span class="text-healthy">None detected</span>
-          <% end %>
+          <%= render "rails_vitals/shared/n1_indicator",
+                     patterns: @record.n_plus_one_patterns,
+                     suffix: "detected",
+                     none_label: "None detected" %>
         </td>
       </tr>
     </tbody>
@@ -95,7 +96,7 @@
       <% @record.queries.sort_by { |q| -q[:duration_ms] }.each do |q| %>
         <tr>
           <td class="sql"><%= q[:sql] %></td>
-          <td class="text-nowrap"><%= q[:duration_ms].round(1) %>ms</td>
+          <td class="text-nowrap"><%= format_ms(q[:duration_ms]) %></td>
         </tr>
       <% end %>
     </tbody>
@@ -109,7 +110,7 @@
       Callback Map
       <span class="text-muted ml-8" style="font-weight:normal;">
         <%= @record.callbacks.size %> callbacks —
-        <%= @record.total_callback_time_ms.round(1) %>ms total
+        <%= format_ms(@record.total_callback_time_ms) %> total
       </span>
     </div>
     <% @record.callbacks.group_by { |c| c[:model] }.each do |model, callbacks| %>
@@ -117,8 +118,9 @@
         <div class="text-accent bold text-12 mb-6" style="padding-bottom:4px;border-bottom:1px solid #2d3748;">
           <%= model %>
           <span class="text-muted" style="font-weight:normal;">
+            <td class="text-muted ml-6">
             (<%= callbacks.size %> callbacks,
-            <%= callbacks.sum { |c| c[:duration_ms] }.round(1) %>ms)
+            <%= format_ms(callbacks.sum { |c| c[:duration_ms] }) %>)
           </span>
         </div>
         <table>
@@ -137,11 +139,9 @@
                     <%= cb[:kind] %>
                   </span>
                 </td>
-                <td><%= cb[:duration_ms] %>ms</td>
+                <td><%= format_ms(cb[:duration_ms]) %></td>
                 <td class="text-muted">
-                  <% pct = @record.total_callback_time_ms > 0 ?
-                    ((cb[:duration_ms] / @record.total_callback_time_ms) * 100).round(1) : 0 %>
-                  <%= pct %>%
+                  <%= percentage(cb[:duration_ms], @record.total_callback_time_ms) %>%
                 </td>
               </tr>
             <% end %>
@@ -180,7 +180,7 @@
         <% dna_id = "dna_#{i}" %>
 
         <%# Query row — clickable %>
-        <tr onclick="toggleDna('<%= dna_id %>')" class="cursor-pointer">
+        <tr onclick="toggleDna(<%= dna_id.to_json %>)" class="cursor-pointer">
           <td class="text-muted"><%= i + 1 %></td>
           <td class="mono text-sm text-primary truncate" style="max-width:400px;">
             <%= q[:sql] %>
@@ -195,8 +195,7 @@
             </span>
           </td>
           <td>
-            <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
-            <span class="text-12" style="color:<%= risk_colors[dna.risk] %>;text-transform:capitalize;">
+            <span class="text-12" style="color:<%= risk_color(dna.risk) %>;text-transform:capitalize;">
               <%= dna.risk %>
             </span>
           </td>
@@ -234,7 +233,7 @@
                 <div class="flex flex-wrap" style="gap:6px;">
                   <% dna.tokens.each do |token| %>
                     <span
-                      onclick="toggleCard('<%= "card_#{dna_id}_#{token[:type]}" %>'); event.stopPropagation();"
+                      onclick="toggleCard(<%= "card_#{dna_id}_#{token[:type]}".to_json %>); event.stopPropagation();"
                       class="mono cursor-pointer"
                       style="background:<%= token[:color] %>22;color:<%= token[:color] %>;border:1px solid <%= token[:color] %>66;padding:3px 10px;border-radius:4px;font-size:12px;"
                     >
@@ -270,8 +269,7 @@
                 </div>
                 <div>
                   <span class="text-muted">Risk</span>
-                  <% risk_colors = { healthy: "#68d391", neutral: "#a0aec0", warning: "#f6ad55", danger: "#fc8181" } %>
-                  <span class="bold ml-6" style="color:<%= risk_colors[dna.risk] %>;text-transform:capitalize;">
+                  <span class="bold ml-6" style="color:<%= risk_color(dna.risk) %>;text-transform:capitalize;">
                     <%= dna.risk %>
                   </span>
                 </div>

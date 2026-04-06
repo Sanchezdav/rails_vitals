@@ -1,10 +1,10 @@
 module RailsVitals
   module Scorers
     class BaseScorer
-      HEALTHY    = (90..100)
+      HEALTHY = (90..100)
       ACCEPTABLE = (70..89)
-      WARNING    = (50..69)
-      CRITICAL   = (0..49)
+      WARNING = (50..69)
+      CRITICAL = (0..49)
 
       def initialize(collector)
         @collector = collector

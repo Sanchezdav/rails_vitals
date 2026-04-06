@@ -13,13 +13,13 @@ module RailsVitals
           return super
         end
 
-        start  = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_millisecond)
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_millisecond)
         result = super
         duration = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_millisecond) - start
 
         collector.add_callback(
-          model:       self.class.name,
-          kind:        kind,
+          model: self.class.name,
+          kind: kind,
           duration_ms: duration.round(2)
         )
 

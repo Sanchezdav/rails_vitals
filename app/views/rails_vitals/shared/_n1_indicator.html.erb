@@ -1,0 +1,9 @@
+<% if patterns.any? %>
+  <span class="n1-badge">
+    <%= patterns.size %><% if local_assigns[:suffix] %> <%= suffix %><% end %>
+  </span>
+<% else %>
+  <span class="text-healthy">
+    <%= local_assigns.fetch(:none_label, "None") %>
+  </span>
+<% end %>

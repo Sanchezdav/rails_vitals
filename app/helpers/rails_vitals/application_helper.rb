@@ -11,13 +11,19 @@ module RailsVitals
     COLOR_ORANGE = "#f6ad55"
     COLOR_LIGHT_GREEN = "#68d391"
 
-    def score_color(color)
+    # Module-level helper so plain Ruby classes (e.g. PanelRenderer) can resolve
+    # a score color without needing a helper instance.
+    def self.score_color_for(color)
       case color
       when "green" then COLOR_GREEN
       when "blue"  then COLOR_BLUE
       when "amber" then COLOR_AMBER
       else              COLOR_RED
       end
+    end
+
+    def score_color(color)
+      RailsVitals::ApplicationHelper.score_color_for(color)
     end
 
     def score_label_to_color(score)
@@ -106,6 +112,22 @@ module RailsVitals
       when 50..69  then COLOR_ORANGE
       else              COLOR_LIGHT_RED
       end
+    end
+
+    # Returns the full badge CSS class string for a score color label.
+    def badge_class(color)
+      "badge badge-#{color}"
+    end
+
+    def format_ms(value)
+      return "0ms" unless value
+
+      "#{value.to_f.round(1)}ms"
+    end
+
+    # Calculates a percentage of count over total, returning 0 when total is zero.
+    def percentage(count, total)
+      total.to_f > 0 ? ((count.to_f / total) * 100).round(1) : 0
     end
   end
 end

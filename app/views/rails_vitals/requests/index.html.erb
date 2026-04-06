@@ -1,4 +1,4 @@
-<div class="page-title">Request History</div>
+<%= render "rails_vitals/shared/page_header", title: "Request History" %>
 
 <div class="filter-bar">
   <%= link_to "All",        rails_vitals.requests_path,                              class: params[:score].blank? && params[:n_plus_one].blank? ? "active" : "" %>
@@ -10,7 +10,7 @@
 </div>
 
 <% if params[:endpoint].present? %>
-  <div class="text-muted" style="margin:20px 0;">
+    <div class="text-muted mb-16">
     Filtering by endpoint:
     <span class="text-accent"><%= params[:endpoint] %></span>
     &nbsp;
@@ -38,20 +38,14 @@
           <td class="text-muted text-sm"><%= r.recorded_at.strftime("%H:%M:%S") %></td>
           <td><%= r.endpoint %></td>
           <td>
-            <span class="badge badge-<%= r.color %>">
-              <%= r.score %>
-            </span>
+            <%= render "rails_vitals/shared/score_badge", color: r.color, score: r.score %>
           </td>
           <td><%= r.total_query_count %></td>
-          <td><%= r.total_db_time_ms.round(1) %>ms</td>
+          <td><%= format_ms(r.total_db_time_ms) %></td>
           <td>
-            <% if r.n_plus_one_patterns.any? %>
-              <span class="n1-badge"><%= r.n_plus_one_patterns.size %></span>
-            <% else %>
-              <span class="text-healthy">—</span>
-            <% end %>
+            <%= render "rails_vitals/shared/n1_indicator", patterns: r.n_plus_one_patterns, none_label: "—" %>
           </td>
-          <td><%= r.duration_ms&.round(1) %>ms</td>
+          <td><%= format_ms(r.duration_ms) %></td>
           <td><%= link_to "→", rails_vitals.request_path(r.id) %></td>
         </tr>
       <% end %>

@@ -9,7 +9,7 @@ module RailsVitals
 
       def count_score
         count = @collector.total_query_count
-        warn_threshold     = RailsVitals.config.query_warn_threshold
+        warn_threshold = RailsVitals.config.query_warn_threshold
         critical_threshold = RailsVitals.config.query_critical_threshold
 
         if count <= warn_threshold
@@ -24,8 +24,8 @@ module RailsVitals
       end
 
       def time_score
-        time_ms    = @collector.total_db_time_ms
-        warn_ms    = RailsVitals.config.db_time_warn_ms
+        time_ms = @collector.total_db_time_ms
+        warn_ms = RailsVitals.config.db_time_warn_ms
         critical_ms = RailsVitals.config.db_time_critical_ms
 
         if time_ms <= warn_ms

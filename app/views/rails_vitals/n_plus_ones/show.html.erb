@@ -11,14 +11,14 @@
   <div class="card-title">Detected Pattern</div>
   <pre class="code-block text-muted mb-16"><%= @pattern[:pattern] %></pre>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:13px;">
+  <div class="grid-3 mb-16" style="font-size:13px;">
     <div>
       <div class="text-muted mb-4">Total Occurrences</div>
       <div class="text-danger stat-value-lg"><%= @pattern[:occurrences] %>x</div>
     </div>
     <div>
       <div class="text-muted mb-4">Estimated Time Wasted</div>
-      <div class="text-danger stat-value-lg"><%= @estimated_saving_ms %>ms</div>
+      <div class="text-danger stat-value-lg"><%= format_ms(@estimated_saving_ms) %></div>
     </div>
     <div>
       <div class="text-muted mb-4">Affected Requests</div>
@@ -48,11 +48,11 @@
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" class="mb-24">
     <div class="impact-box">
       <div class="section-label">Est. Saving Per Request</div>
-      <div class="text-healthy stat-value-xl"><%= @avg_saving_per_request %>ms</div>
+      <div class="text-healthy stat-value-xl"><%= format_ms(@avg_saving_per_request) %></div>
     </div>
     <div class="impact-box">
       <div class="section-label">Total Time Recovered</div>
-      <div class="text-healthy stat-value-xl"><%= @estimated_saving_ms %>ms</div>
+      <div class="text-healthy stat-value-xl"><%= format_ms(@estimated_saving_ms) %></div>
     </div>
     <div class="impact-box">
       <div class="section-label">Requests Affected</div>
@@ -77,12 +77,11 @@
         <tr>
           <td><%= r.endpoint %></td>
           <td>
-            <span class="badge badge-<%= score_label_to_color(r.score) %>">
-              <%= r.score %>
-            </span>
+            <%= render "rails_vitals/shared/score_badge",
+                       color: score_label_to_color(r.score), score: r.score %>
           </td>
           <td><%= r.total_query_count %></td>
-          <td class="text-muted"><%= r.duration_ms.round(1) %>ms</td>
+          <td class="text-muted"><%= format_ms(r.duration_ms) %></td>
           <td>
             <%= link_to "→", request_path(r.id), class: "text-accent" %>
           </td>

@@ -4,43 +4,43 @@ module RailsVitals
                 :response_status, :duration_ms, :started_at
 
     def initialize
-      @queries        = []
-      @callbacks      = []
-      @controller     = nil
-      @action         = nil
-      @http_method    = nil
+      @queries = []
+      @callbacks = []
+      @controller = nil
+      @action = nil
+      @http_method = nil
       @response_status = nil
-      @duration_ms    = nil
-      @started_at     = Time.now
+      @duration_ms = nil
+      @started_at = Time.now
     end
 
     # Called by the sql.active_record subscriber
     def add_query(sql:, duration_ms:, source:, binds: [])
       @queries << {
-        sql:         sql,
+        sql: sql,
         duration_ms: duration_ms,
-        source:      source,
-        binds:       binds,
-        called_at:   Time.now
+        source: source,
+        binds: binds,
+        called_at: Time.now
       }
     end
 
     def add_callback(model:, kind:, duration_ms:)
       @callbacks << {
-        model:       model,
-        kind:        kind,
+        model: model,
+        kind: kind,
         duration_ms: duration_ms,
-        called_at:   Time.now
+        called_at: Time.now
       }
     end
 
     # Called by the process_action.action_controller subscriber
     def finalize!(event)
-      @controller      = event.payload[:controller]
-      @action          = event.payload[:action]
-      @http_method     = event.payload[:method]
+      @controller = event.payload[:controller]
+      @action = event.payload[:action]
+      @http_method = event.payload[:method]
       @response_status = event.payload[:status]
-      @duration_ms     = event.duration
+      @duration_ms = event.duration
     end
 
     def total_query_count

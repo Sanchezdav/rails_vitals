@@ -50,6 +50,7 @@ module RailsVitals
 
         subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
           next if RailsVitals::Notifications::Subscriber.internal_query?(payload[:sql])
+
           queries << {
             sql: payload[:sql],
             duration_ms: (payload[:duration].to_f / 1000).round(3)
@@ -60,7 +61,7 @@ module RailsVitals
           Timeout.timeout(2) do
             relation = build_relation(expression, model)
             relation = apply_limit(relation)
-            records  = relation.load
+            records = relation.load
 
             # Simulate association access — triggers N+1 if not eager loaded
             if access_associations.any?

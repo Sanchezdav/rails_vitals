@@ -51,7 +51,5 @@
     </table>
   </div>
 <% else %>
-  <div class="card empty-state">
-    No N+1 patterns detected yet.
-  </div>
+  <%= render "rails_vitals/shared/empty_state", message: "No N+1 patterns detected yet." %>
 <% end %>

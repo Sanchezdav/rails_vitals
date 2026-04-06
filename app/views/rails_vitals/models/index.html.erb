@@ -94,7 +94,6 @@
     </div>
   <% end %>
 <% else %>
-  <div class="card empty-state">
-    No data recorded yet. Visit your app to generate data.
-  </div>
+  <%= render "rails_vitals/shared/empty_state",
+             message: "No data recorded yet. Visit your app to generate data." %>
 <% end %>

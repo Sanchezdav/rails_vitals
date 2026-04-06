@@ -28,10 +28,10 @@ module RailsVitals
           next if rails_vitals_request?
 
           collector.add_query(
-            sql:         event.payload[:sql],
+            sql: event.payload[:sql],
             duration_ms: event.duration,
-            source:      extract_source(event.payload[:binds]),
-            binds:       event.payload[:binds]&.map(&:value) || []
+            source: extract_source(event.payload[:binds]),
+            binds: event.payload[:binds]&.map(&:value) || []
           )
         end
       end

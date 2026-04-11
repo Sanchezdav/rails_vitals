@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails_vitals (0.4.1)
+    rails_vitals (0.4.2)
       rails (>= 7.0)
 
 GEM

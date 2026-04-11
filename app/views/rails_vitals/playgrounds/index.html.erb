@@ -68,6 +68,7 @@
     <% if @result.error %>
       <div class="error-card">❌ <%= @result.error %></div>
     <% else %>
+    <% if @previous %>
       <%# Before — older run %>
       <div class="compare-box mb-16">
         <div class="mini-label mb-6">← Before</div>
@@ -166,6 +167,7 @@
       (<%= query_delta >= 0 ? "+" : "" %><%= query_delta %>) ·
       N+1: <%= @previous[:n1_count] %> → <%= @result.n1_patterns.size %>
     </div>
+    <% end %><%# closes if @previous %>
 
     <%# Result stats grid %>
     <%

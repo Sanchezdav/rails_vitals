@@ -8,4 +8,6 @@ RailsVitals::Engine.routes.draw do
   resources :playgrounds, only: [ :index, :create ]
   get "heatmap", to: "heatmap#index", as: :heatmap
   get "requests/:request_id/explain/:query_index", to: "explains#show", as: :explain
+
+  post "/mcp", to: "mcp#call" if RailsVitals.config.mcp_enabled
 end

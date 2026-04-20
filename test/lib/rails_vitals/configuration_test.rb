@@ -14,9 +14,13 @@ class RailsVitalsConfigurationTest < ActiveSupport::TestCase
     assert_equal 25, config.query_critical_threshold
     assert_equal 100, config.db_time_warn_ms
     assert_equal 500, config.db_time_critical_ms
+    assert_equal false, config.mcp_enabled
+    assert_nil config.mcp_auth_token
+    assert_equal 100, config.mcp_max_log_size
+    assert_equal 100, config.mcp_slow_query_threshold_ms
   end
 
-  test "configuration accessors return assigned values for auth credentials store and scoring thresholds" do
+  test "configuration accessors return assigned values for auth credentials store scoring thresholds and mcp settings" do
     config = RailsVitals::Configuration.new
 
     config.enabled = true
@@ -29,6 +33,10 @@ class RailsVitalsConfigurationTest < ActiveSupport::TestCase
     config.query_critical_threshold = 21
     config.db_time_warn_ms = 80
     config.db_time_critical_ms = 450
+    config.mcp_enabled = true
+    config.mcp_auth_token = "mcp-secret"
+    config.mcp_max_log_size = 250
+    config.mcp_slow_query_threshold_ms = 180
 
     assert config.enabled
     assert_equal 500, config.store_size
@@ -40,5 +48,9 @@ class RailsVitalsConfigurationTest < ActiveSupport::TestCase
     assert_equal 21, config.query_critical_threshold
     assert_equal 80, config.db_time_warn_ms
     assert_equal 450, config.db_time_critical_ms
+    assert config.mcp_enabled
+    assert_equal "mcp-secret", config.mcp_auth_token
+    assert_equal 250, config.mcp_max_log_size
+    assert_equal 180, config.mcp_slow_query_threshold_ms
   end
 end

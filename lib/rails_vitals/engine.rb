@@ -24,6 +24,7 @@ module RailsVitals
         require "rails_vitals/mcp/tools/base"
         require "rails_vitals/mcp/request_handler"
         require "rails_vitals/mcp/tools/get_score"
+        require "rails_vitals/mcp/tools/get_n1_queries"
       end
     end
 

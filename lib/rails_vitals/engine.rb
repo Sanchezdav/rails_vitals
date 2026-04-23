@@ -23,6 +23,7 @@ module RailsVitals
         require "rails_vitals/mcp/tool_registry"
         require "rails_vitals/mcp/tools/base"
         require "rails_vitals/mcp/request_handler"
+        require "rails_vitals/mcp/tools/get_score"
       end
     end
 

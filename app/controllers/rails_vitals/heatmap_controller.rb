@@ -1,5 +1,6 @@
 module RailsVitals
   class HeatmapController < ApplicationController
+    include Calculable
     def index
       records   = RailsVitals.store.all
       @heatmap  = build_heatmap(records)
@@ -25,15 +26,9 @@ module RailsVitals
         .sort_by { |row| row[:avg_score] }
     end
 
-    def average(records, method)
-      return 0.0 if records.empty?
-      (records.sum { |r| r.public_send(method) }.to_f / records.size).round(1)
-    end
-
     def n_plus_one_frequency(reqs)
       reqs_with_n1 = reqs.count { |r| r.n_plus_one_patterns.any? }
-      return 0.0 if reqs.empty?
-      ((reqs_with_n1.to_f / reqs.size) * 100).round(1)
+      percentage(reqs_with_n1, reqs.size)
     end
   end
 end

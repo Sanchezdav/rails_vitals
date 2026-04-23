@@ -199,7 +199,7 @@ module RailsVitals
       end
 
       def self.score_n1(count)
-        [ 100 - (count * 25), 0 ].max
+        Scorers::NPlusOneScorer.score_for(count)
       end
 
       def self.blocked_result(message)

@@ -1,5 +1,7 @@
 module RailsVitals
   class DashboardController < ApplicationController
+    include Calculable
+
     def index
       @records = RailsVitals.store.all.reverse
       @total   = @records.size
@@ -13,12 +15,6 @@ module RailsVitals
     end
 
     private
-
-    def average(records, method)
-      return 0 if records.empty?
-
-      (records.sum(&method).to_f / records.size).round(1)
-    end
 
     def top_offenders(records)
       records

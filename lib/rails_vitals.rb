@@ -1,5 +1,6 @@
 require "rails_vitals/version"
 require "rails_vitals/configuration"
+require "rails_vitals/calculable"
 require "rails_vitals/store"
 require "rails_vitals/collector"
 require "rails_vitals/request_record"

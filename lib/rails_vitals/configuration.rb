@@ -9,7 +9,11 @@ module RailsVitals
                   :query_warn_threshold,
                   :query_critical_threshold,
                   :db_time_warn_ms,
-                  :db_time_critical_ms
+                  :db_time_critical_ms,
+                  :mcp_enabled,
+                  :mcp_auth_token,
+                  :mcp_max_log_size,
+                  :mcp_slow_query_threshold_ms
 
     def initialize
       @enabled                  = defined?(Rails) && !Rails.env.production?
@@ -22,6 +26,12 @@ module RailsVitals
       @query_critical_threshold = 25
       @db_time_warn_ms          = 100
       @db_time_critical_ms      = 500
+
+      # MCP Server — disabled by default
+      @mcp_enabled                 = false
+      @mcp_auth_token              = nil
+      @mcp_max_log_size            = 100
+      @mcp_slow_query_threshold_ms = 100
     end
   end
 end

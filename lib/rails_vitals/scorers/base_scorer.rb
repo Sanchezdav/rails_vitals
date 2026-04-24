@@ -6,6 +6,24 @@ module RailsVitals
       WARNING = (50..69)
       CRITICAL = (0..49)
 
+      def self.label_for(score)
+        case score
+        when HEALTHY    then "Healthy"
+        when ACCEPTABLE then "Acceptable"
+        when WARNING    then "Warning"
+        else                 "Critical"
+        end
+      end
+
+      def self.color_for(score)
+        case score
+        when HEALTHY    then "green"
+        when ACCEPTABLE then "blue"
+        when WARNING    then "amber"
+        else                 "red"
+        end
+      end
+
       def initialize(collector)
         @collector = collector
       end

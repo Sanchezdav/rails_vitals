@@ -4,11 +4,12 @@ module RailsVitals
       # Minimum times the same query must repeat to be flagged
       REPEAT_THRESHOLD = 3
 
-      def score
-        return 100 if n_plus_one_count.zero?
+      def self.score_for(pattern_count)
+        [ 100 - (pattern_count * 25), 0 ].max
+      end
 
-        # Each N+1 pattern costs 25 points, floored at 0
-        clamp(100 - (n_plus_one_count * 25))
+      def score
+        self.class.score_for(n_plus_one_count)
       end
 
       def n_plus_one_patterns

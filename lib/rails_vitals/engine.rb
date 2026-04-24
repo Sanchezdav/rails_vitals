@@ -14,6 +14,20 @@ module RailsVitals
       end
     end
 
+    initializer "rails_vitals.mcp" do
+      if RailsVitals.config.mcp_enabled
+        raise "RailsVitals MCP cannot run in production" if Rails.env.production?
+
+        require "rails_vitals/mcp/auth"
+        require "rails_vitals/mcp/response_builder"
+        require "rails_vitals/mcp/tool_registry"
+        require "rails_vitals/mcp/tools/base"
+        require "rails_vitals/mcp/request_handler"
+        require "rails_vitals/mcp/tools/get_score"
+        require "rails_vitals/mcp/tools/get_n1_queries"
+      end
+    end
+
     config.to_prepare do
       if RailsVitals.config.enabled
         ActiveRecord::Base.prepend(

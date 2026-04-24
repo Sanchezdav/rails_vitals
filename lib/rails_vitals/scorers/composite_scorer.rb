@@ -15,21 +15,11 @@ module RailsVitals
       end
 
       def label
-        case score
-        when BaseScorer::HEALTHY    then "Healthy"
-        when BaseScorer::ACCEPTABLE then "Acceptable"
-        when BaseScorer::WARNING    then "Warning"
-        else                             "Critical"
-        end
+        BaseScorer.label_for(score)
       end
 
       def color
-        case score
-        when BaseScorer::HEALTHY    then "green"
-        when BaseScorer::ACCEPTABLE then "blue"
-        when BaseScorer::WARNING    then "amber"
-        else                             "red"
-        end
+        BaseScorer.color_for(score)
       end
     end
   end

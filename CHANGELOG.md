@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] — 2026-04-23
+
+### Added
+
+#### 🤖 MCP Server — AI Tool Integration
+
+- Added a built-in MCP (Model Context Protocol) server, enabling Claude Desktop and other MCP-compatible AI clients to query RailsVitals data directly.
+- New `config.mcp_enabled` flag (default: `false`) — guards all MCP infrastructure from loading unless opted in; raises if enabled in production.
+- New `config.mcp_auth_token` option for token-based authentication on MCP endpoints.
+- MCP server mounts a JSON-RPC 2.0 endpoint at `POST /rails_vitals/mcp` alongside the existing admin UI.
+- `ToolRegistry` — declarative class-based tool registry; tools self-register at load time via `ToolRegistry.register(ToolClass)`.
+- `Tools::Base` — base class for all MCP tools; provides `call(params)` interface and `definition` class method returning `name`, `description`, and `inputSchema`.
+- `RequestHandler` — parses JSON-RPC requests, dispatches to registered tools, and returns compliant JSON-RPC responses.
+- `Auth` — validates `Authorization: Bearer <token>` header against `config.mcp_auth_token`.
+
+##### `railsvitals_get_score`
+Returns the aggregate health score across all recent requests. Fields: `overall_score`, `grade` (Healthy/Acceptable/Warning/Critical), `color`, `requests_analyzed`, `score_breakdown` (avg query score and avg N+1 score with weights), `penalties` (unique N+1 pattern count, total occurrences), and `projected_score_if_n1_fixed` showing the gain if all N+1s were eliminated.
+
+##### `railsvitals_get_n1_queries`
+Returns all detected N+1 query patterns ranked by occurrences. Each pattern includes: normalized SQL fingerprint, occurrence count, affected table, foreign key, affected endpoints with hit counts, and a concrete `Model.includes(:association)` fix suggestion. Accepts a `limit` param (default: 10). Returns distinct empty-state responses for no recorded requests vs. no N+1 patterns.
+
+### Changed
+
+- Extracted `Calculable` module (`lib/rails_vitals/calculable.rb`) with `average` and `percentage` helpers — included by both admin UI controllers and MCP tools to eliminate duplication.
+- `BaseScorer.label_for(score)` and `BaseScorer.color_for(score)` added as class methods — single source of truth for grade/color mapping shared by `CompositeScorer`, `GetScore`, and the admin UI.
+- `NPlusOneScorer.score_for(pattern_count)` added as a class method — called by both `NPlusOneScorer#score` and the `get_score` tool without duplication.
+- `DashboardController` and `HeatmapController` now include `Calculable` and use the shared `average` and `percentage` methods.
+
+---
+
 ## [0.4.1] — 2026-04-05
 
 ### Changed

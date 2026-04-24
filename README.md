@@ -135,6 +135,10 @@ RailsVitals.configure do |config|
 
   # Custom auth lambda (if auth: :lambda)
   # config.auth = ->(request) { request.session[:admin] == true }
+
+  # MCP server (disabled by default, never runs in production)
+  config.mcp_enabled    = false
+  config.mcp_auth_token = nil   # set a token to require Authorization: Bearer <token>
 end
 ```
 
@@ -155,6 +159,86 @@ Navigate to `/rails_vitals` to access the full admin interface.
 | Association Map | `/rails_vitals/associations` | Live SVG model graph with N+1 and index annotations |
 | EXPLAIN Visualizer | `/rails_vitals/requests/:request_id/explain/:query_index` | Interactive PostgreSQL EXPLAIN ANALYZE tree with warnings and fix suggestions |
 | Playground | `/rails_vitals/playgrounds` | Read-only sandbox for testing eager-loading fixes against real app data |
+
+---
+
+## MCP Server — AI Tool Integration
+
+RailsVitals includes a built-in [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that exposes your app's performance data as tools that Claude Desktop and other MCP-compatible AI clients can call directly.
+
+Ask Claude things like:
+
+> "What is my Rails app's health score right now?"
+> "Show me the top 3 N+1 patterns and how to fix them."
+
+### Enabling the MCP server
+
+```ruby
+# config/initializers/rails_vitals.rb
+RailsVitals.configure do |config|
+  config.mcp_enabled    = true
+  config.mcp_auth_token = "your-secret-token"   # optional but recommended
+end
+```
+
+The MCP server is disabled by default and raises an error if enabled in production.
+
+### Connecting Claude Desktop
+
+Install `mcp-remote`, which bridges Claude Desktop's stdio transport to the HTTP-based MCP server:
+
+```bash
+npm install -g mcp-remote
+```
+
+Add an entry to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "rails-vitals": {
+      "command": "/absolute/path/to/npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:3000/rails_vitals/mcp",
+        "--header",
+        "Authorization: Bearer your-secret-token"
+      ]
+    }
+  }
+}
+```
+
+Use an absolute path to `npx` (e.g. from `which npx`) — Claude Desktop does not inherit your shell `PATH`.
+
+Restart Claude Desktop and look for the RailsVitals tools in the tool picker.
+
+### Available tools
+
+| Tool | Description |
+|------|-------------|
+| `railsvitals_get_score` | Overall health score, grade, score breakdown by dimension, N+1 penalties, and projected score if all N+1 patterns were fixed |
+| `railsvitals_get_n1_queries` | All detected N+1 patterns ranked by occurrences, with affected endpoints and concrete `includes()` fix suggestions. Accepts a `limit` param (default: 10) |
+
+### How it's structured
+
+```
+lib/rails_vitals/mcp/
+├── auth.rb              # Bearer token validation
+├── request_handler.rb   # JSON-RPC 2.0 dispatcher
+├── response_builder.rb  # MCP response formatting helpers
+├── tool_registry.rb     # Declarative class-based tool registry
+└── tools/
+    ├── base.rb            # Base class: call + definition interface
+    ├── get_score.rb       # railsvitals_get_score
+    └── get_n1_queries.rb  # railsvitals_get_n1_queries
+```
+
+Each tool inherits from `Tools::Base`, implements `call(params)` returning a plain hash, and self-registers at load time via `ToolRegistry.register(ToolClass)`.
+
+### Example
+
+![Claude MCP](https://github.com/user-attachments/assets/4cf7d071-1925-4b9f-a1cb-49b61f2e30e7)
 
 ---
 
@@ -264,8 +348,18 @@ rails_vitals/
 │       │   ├── query_scorer.rb                # 40% weight
 │       │   ├── n_plus_one_scorer.rb           # 60% weight
 │       │   └── composite_scorer.rb
-│       └── middleware/
-│           └── panel_injector.rb              # Rack middleware for panel injection
+│       ├── calculable.rb                      # Shared average/percentage helpers
+│       ├── middleware/
+│       │   └── panel_injector.rb              # Rack middleware for panel injection
+│       └── mcp/
+│           ├── auth.rb                        # Bearer token validation
+│           ├── request_handler.rb             # JSON-RPC 2.0 dispatcher
+│           ├── response_builder.rb            # MCP response helpers
+│           ├── tool_registry.rb               # Declarative tool registry
+│           └── tools/
+│               ├── base.rb                    # Base class for all tools
+│               ├── get_score.rb               # railsvitals_get_score
+│               └── get_n1_queries.rb          # railsvitals_get_n1_queries
 └── app/
     ├── controllers/rails_vitals/
     │   ├── dashboard_controller.rb

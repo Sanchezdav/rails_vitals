@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] — 2026-04-24
+
+### Security
+
+- Updated `rack-session` from 2.1.1 to 2.1.2 — patches `Rack::Session::Cookie` decrypt-failure fallback that allowed session forgery without a known secret (affects `secrets:` configurations; Rails apps using `ActionDispatch::Session::CookieStore` are not directly affected).
+- Updated `rack` from 3.2.5 to 3.2.6.
+
+### Changed
+
+- Raised `required_ruby_version` in gemspec from `>= 3.0.0` to `>= 3.2.0` to reflect the actual minimum imposed by the Rails 7 / bundler dependency chain.
+
+### Dependencies
+
+- Bumped `json` from 2.18.1 to 2.19.2.
+- Bumped `activestorage` from 8.1.2 to 8.1.2.1.
+- Bumped `action_text-trix` from 2.1.16 to 2.1.18.
+
+---
+
 ## [0.5.0] — 2026-04-23
 
 ### Added

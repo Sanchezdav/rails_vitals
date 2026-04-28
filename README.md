@@ -168,8 +168,29 @@ RailsVitals includes a built-in [MCP (Model Context Protocol)](https://modelcont
 
 Ask Claude things like:
 
+**Health score** (`railsvitals_get_score`)
 > "What is my Rails app's health score right now?"
+> "How much would my score improve if I fixed all N+1 patterns?"
+
+**N+1 patterns** (`railsvitals_get_n1_queries`)
 > "Show me the top 3 N+1 patterns and how to fix them."
+> "Which endpoint is responsible for the most N+1 occurrences?"
+
+**Slow queries** (`railsvitals_get_slow_queries`)
+> "Show me queries slower than 50ms."
+> "What is the single slowest query across all recent requests and which endpoint fired it?"
+
+**Request log** (`railsvitals_get_request_log`)
+> "Which requests from FeedController had the worst score?"
+> "Is PostsController#index consistently slow or only sometimes?"
+
+**Schema context** (`railsvitals_get_schema_context`)
+> "What models have foreign keys without an index?"
+> "Show me the full schema for Post and Comment including their associations."
+
+**EXPLAIN** (`railsvitals_explain_query`)
+> "Run EXPLAIN on this slow query and tell me what's wrong."
+> "Why is this query doing a sequential scan and how do I fix it?"
 
 ### Enabling the MCP server
 
@@ -218,7 +239,11 @@ Restart Claude Desktop and look for the RailsVitals tools in the tool picker.
 | Tool | Description |
 |------|-------------|
 | `railsvitals_get_score` | Overall health score, grade, score breakdown by dimension, N+1 penalties, and projected score if all N+1 patterns were fixed |
-| `railsvitals_get_n1_queries` | All detected N+1 patterns ranked by occurrences, with affected endpoints and concrete `includes()` fix suggestions. Accepts a `limit` param (default: 10) |
+| `railsvitals_get_n1_queries` | All detected N+1 patterns ranked by occurrences, with affected endpoints and concrete `includes()` fix suggestions. Accepts `limit` |
+| `railsvitals_get_slow_queries` | Individual slow queries across all recent requests, ordered by duration. Accepts `threshold_ms` override and `limit` |
+| `railsvitals_get_request_log` | Recent requests ordered most-recent-first with score, query count, DB time, and N+1 count. Accepts `controller` filter and `limit` |
+| `railsvitals_get_schema_context` | Columns, indexes, associations, and missing FK indexes for ActiveRecord models. Accepts a `models` array to scope results |
+| `railsvitals_explain_query` | Runs `EXPLAIN ANALYZE` on a SELECT query and returns warnings, fix suggestions with migration snippets, and a plain-English interpretation. Requires `sql` param |
 
 ### How it's structured
 
@@ -229,9 +254,13 @@ lib/rails_vitals/mcp/
 ├── response_builder.rb  # MCP response formatting helpers
 ├── tool_registry.rb     # Declarative class-based tool registry
 └── tools/
-    ├── base.rb            # Base class: call + definition interface
-    ├── get_score.rb       # railsvitals_get_score
-    └── get_n1_queries.rb  # railsvitals_get_n1_queries
+    ├── base.rb              # Base class: call + definition interface
+    ├── get_score.rb         # railsvitals_get_score
+    ├── get_n1_queries.rb    # railsvitals_get_n1_queries
+    ├── get_slow_queries.rb  # railsvitals_get_slow_queries
+    ├── get_request_log.rb   # railsvitals_get_request_log
+    ├── get_schema_context.rb # railsvitals_get_schema_context
+    └── explain_query.rb     # railsvitals_explain_query
 ```
 
 Each tool inherits from `Tools::Base`, implements `call(params)` returning a plain hash, and self-registers at load time via `ToolRegistry.register(ToolClass)`.

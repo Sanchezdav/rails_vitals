@@ -27,6 +27,7 @@ module RailsVitals
         require "rails_vitals/mcp/tools/get_n1_queries"
         require "rails_vitals/mcp/tools/get_slow_queries"
         require "rails_vitals/mcp/tools/get_request_log"
+        require "rails_vitals/mcp/tools/get_schema_context"
       end
     end
 

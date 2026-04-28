@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] — 2026-04-27
+
+### Added
+
+#### 🛠 MCP Tools — Extended Diagnostics
+
+Four new MCP tools expanding the AI integration introduced in 0.5.0:
+
+##### `railsvitals_get_slow_queries`
+Returns individual slow queries across all recent requests, ordered by duration descending. Each result includes the SQL, execution time, endpoint, and `request_id`. Accepts a `threshold_ms` override (default: `config.mcp_slow_query_threshold_ms`, 100ms) and a `limit` param (default: 10). Queries are flattened across all stored records — not scoped to a single request.
+
+##### `railsvitals_get_request_log`
+Returns recent requests ordered most-recent-first. Each entry includes endpoint, health score, grade, query count, total DB time, N+1 pattern count, request duration, and `recorded_at` timestamp. Accepts a `controller` param for case-insensitive partial filtering (e.g. `"Feed"` matches `FeedController`) and a `limit` param (default: 20). Useful for spotting whether a problem is consistent or intermittent, and for correlating N+1 patterns back to specific requests.
+
+##### `railsvitals_get_schema_context`
+Returns schema context for ActiveRecord models using AR reflection and `connection.columns` / `connection.indexes` — no dependency on the query subscriber or stored request data. Each model entry includes: columns with types and nullability, indexes with uniqueness flags, associations with macro type and FK index status, and a `missing_indexes` list of `belongs_to` foreign keys without an index. Accepts a `models` array to scope results; omit to return all models.
+
+##### `railsvitals_explain_query`
+Runs `EXPLAIN (FORMAT JSON, ANALYZE)` on a SELECT query and returns: total cost, actual execution time, rows examined, detected warnings (Seq Scan, Sort without index, large Nested Loop), fix suggestions with migration snippets and generator commands, and a plain-English `interpretation`. Delegates to the existing `ExplainAnalyzer`. Requires a `sql` param. Rejects any SQL containing DML keywords (INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER) — including inside CTEs — because `EXPLAIN ANALYZE` executes the query.
+
+---
+
 ## [0.5.1] — 2026-04-24
 
 ### Security

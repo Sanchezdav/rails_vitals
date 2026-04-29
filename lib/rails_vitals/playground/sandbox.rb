@@ -1,18 +1,15 @@
 module RailsVitals
   module Playground
     class Sandbox
-      ALLOWED_METHODS = %w[
-        all where select limit offset order group
-        includes preload eager_load joins left_joins
-        find find_by first last count sum average
-        pluck distinct having references unscoped
-      ].freeze
-
       BLOCKED_PATTERNS = [
         /\b(insert|update|delete|destroy|drop|truncate|create|alter)\b/i,
         /\.save/i, /\.save!/i, /\.update/i, /\.delete/i,
         /\.destroy/i, /`/
       ].freeze
+
+      SAFE_EXPRESSION_PATTERN = /\A[a-zA-Z0-9_\.\s\(\),:\[\]{}'"!?=<>|&*+\-\/\\%]+\z/
+
+      ASSOCIATION_NAME_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_]*\z/
 
       DEFAULT_LIMIT = 100
 
@@ -26,11 +23,22 @@ module RailsVitals
       def self.run(expression, access_associations: [])
         return blocked_result("No expression provided") if expression.blank?
 
+        expression = expression.gsub(/#[^\n]*/, "").strip
+        return blocked_result("No expression provided") if expression.blank?
+
+        return blocked_result(
+          "Expression contains invalid characters."
+        ) unless expression.match?(SAFE_EXPRESSION_PATTERN)
+
         BLOCKED_PATTERNS.each do |pattern|
           return blocked_result(
             "Expression contains blocked operation. " \
             "The Playground is read-only — no writes permitted."
           ) if expression.match?(pattern)
+        end
+
+        access_associations = access_associations.select do |name|
+          name.to_s.match?(ASSOCIATION_NAME_PATTERN)
         end
 
         model_name = extract_model_name(expression)
@@ -111,10 +119,7 @@ module RailsVitals
       end
 
       def self.extract_model_name(expression)
-        # Strip comments first
-        clean = expression.gsub(/#[^\n]*/, "").strip
-        # First word before a dot or whitespace — must look like a constant (CamelCase)
-        match = clean.match(/\A([A-Z][A-Za-z0-9]*)/)
+        match = expression.match(/\A([A-Z][A-Za-z0-9]*)/)
         match ? match[1] : nil
       end
 
@@ -132,31 +137,15 @@ module RailsVitals
       end
 
       def self.build_relation(expression, model)
-        # Parse "Post.includes(:likes).where(published: true).limit(10)"
-        # Strip the model name prefix if present
         chain_str = expression
           .sub(/\A#{Regexp.escape(model.name)}\s*\.?\s*/, "")
           .strip
 
         return model.all if chain_str.blank?
 
-        # Build the chain by safe eval within a controlled binding
-        # Only the model constant is exposed, no access to app globals
-        sandbox_binding = build_binding(model)
-        relation = eval(chain_str, sandbox_binding) # rubocop:disable Security/Eval
-
-        unless relation.is_a?(ActiveRecord::Relation)
-          raise "Expression must return an ActiveRecord::Relation"
-        end
-
-        relation
-      end
-
-      def self.build_binding(model)
-        # Create a minimal binding with only the model exposed
-        ctx = Object.new
-        ctx.define_singleton_method(:relation) { model.all }
-        ctx.instance_eval { binding }
+        SafeChainBuilder.build(chain_str, model)
+      rescue SafeChainBuilder::ParseError => e
+        raise "Expression error: #{e.message}"
       end
 
       def self.apply_limit(relation)

@@ -24,9 +24,30 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
     )
   end
 
+  def make_dry_run_result(overrides = {})
+    ExplainAnalyzer::Result.new(
+      sql: SELECT_SQL,
+      plan: nil,
+      total_cost: 42.5,
+      error: nil,
+      **overrides
+    )
+  end
+
   def call_tool(params)
-    with_stub(ExplainAnalyzer, :analyze, make_result) do
-      ExplainQuery.new.call(params)
+    with_stub(ExplainAnalyzer, :dry_run, make_dry_run_result) do
+      with_stub(ExplainAnalyzer, :analyze, make_result) do
+        ExplainQuery.new.call(params)
+      end
+    end
+  end
+
+  def with_stubbed_explain(analyze_return, dry_run_return: nil)
+    dry_run_return ||= make_dry_run_result
+    with_stub(ExplainAnalyzer, :dry_run, dry_run_return) do
+      with_stub(ExplainAnalyzer, :analyze, analyze_return) do
+        yield
+      end
     end
   end
 
@@ -47,7 +68,7 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
   end
 
   test "#call accepts string sql key from JSON params" do
-    with_stub(ExplainAnalyzer, :analyze, make_result) do
+    with_stubbed_explain(make_result) do
       result = ExplainQuery.new.call({ "sql" => SELECT_SQL })
 
       assert_nil result[:error]
@@ -107,9 +128,8 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
   end
 
   test "#call does not reject SELECT with columns named like DML keywords" do
-    # 'updated_at', 'created_at' — should not match DML guard
     sql = "SELECT id, updated_at, created_at FROM posts WHERE user_id = 1"
-    with_stub(ExplainAnalyzer, :analyze, make_result) do
+    with_stubbed_explain(make_result) do
       result = ExplainQuery.new.call({ sql: sql })
 
       assert_nil result[:error]
@@ -120,7 +140,7 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
 
   test "#call returns error response when ExplainAnalyzer returns an error" do
     error_result = make_result(error: "EXPLAIN is only available for SELECT queries.")
-    with_stub(ExplainAnalyzer, :analyze, error_result) do
+    with_stubbed_explain(error_result) do
       result = ExplainQuery.new.call({ sql: SELECT_SQL })
 
       assert result[:error]
@@ -140,11 +160,24 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
     assert_equal "Plan looks healthy — index used, no warnings.", result[:interpretation]
   end
 
+  test "#call serializes cost estimate" do
+    result = call_tool({ sql: SELECT_SQL })
+
+    assert result[:cost_estimate]
+    assert_equal 42.5, result[:cost_estimate][:total_cost]
+  end
+
+  test "#call serializes function_calls field" do
+    result = call_tool({ sql: SELECT_SQL })
+
+    assert_includes result.keys, :function_calls
+  end
+
   test "#call serializes warnings with type severity and table" do
     warnings = [
       { type: :sequential_scan, severity: :danger, table: "posts", rows: 5000, removed: 4900 }
     ]
-    with_stub(ExplainAnalyzer, :analyze, make_result(warnings: warnings)) do
+    with_stubbed_explain(make_result(warnings: warnings)) do
       result = ExplainQuery.new.call({ sql: SELECT_SQL })
       w = result[:warnings].first
 
@@ -161,7 +194,7 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
         body: "Full table scan detected.", migration: "add_index :posts, :user_id",
         command: "rails g migration AddUserIdIndexToPosts" }
     ]
-    with_stub(ExplainAnalyzer, :analyze, make_result(suggestions: suggestions)) do
+    with_stubbed_explain(make_result(suggestions: suggestions)) do
       result = ExplainQuery.new.call({ sql: SELECT_SQL })
       s = result[:suggestions].first
 
@@ -178,7 +211,7 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
       { severity: :warning, title: "Large Nested Loop",
         body: "Check join indexes.", migration: nil, command: nil }
     ]
-    with_stub(ExplainAnalyzer, :analyze, make_result(suggestions: suggestions)) do
+    with_stubbed_explain(make_result(suggestions: suggestions)) do
       result = ExplainQuery.new.call({ sql: SELECT_SQL })
       s = result[:suggestions].first
 
@@ -192,6 +225,26 @@ class RailsVitalsMCPToolsExplainQueryTest < ActiveSupport::TestCase
 
     assert_equal [], result[:warnings]
     assert_equal [], result[:suggestions]
+  end
+
+  test "#call returns cost estimate with note when dry run succeeded" do
+    result = call_tool({ sql: SELECT_SQL })
+
+    assert result[:cost_estimate][:note]
+    assert_includes result[:cost_estimate][:note], "ANALYZE was not executed"
+  end
+
+  # --- dry_run error ---
+
+  test "#call returns error when dry_run fails" do
+    failed_dry_run = make_dry_run_result(error: "column does not exist")
+    with_stub(ExplainAnalyzer, :dry_run, failed_dry_run) do
+      result = ExplainQuery.new.call({ sql: SELECT_SQL })
+
+      assert result[:error]
+      assert_includes result[:error], "Cost estimate failed"
+      assert_includes result[:error], "column does not exist"
+    end
   end
 
   # --- registration ---

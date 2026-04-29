@@ -50,7 +50,7 @@
       </div>
 
       <% @result.warnings.each do |w| %>
-        <% severity_color = w[:severity] == :danger ? "#fc8181" : "#f6ad55" %>
+        <% severity_color = explain_severity_color(w[:severity]) %>
 
         <div
           style="background:#1a202c;border-left:3px solid <%= severity_color %>;
@@ -80,6 +80,13 @@
             </div>
             <div class="text-muted">
               Nested Loop processed a large number of rows. Verify join columns are indexed.
+            </div>
+          <% when :function_call %>
+            <div class="bold mb-4" style="color:<%= severity_color %>;">
+              Function Call Detected
+            </div>
+            <div class="text-muted">
+              <%= w[:message] %>
             </div>
           <% end %>
         </div>

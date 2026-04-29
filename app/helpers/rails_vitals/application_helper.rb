@@ -104,6 +104,16 @@ module RailsVitals
       }[risk.to_sym] || COLOR_NEUTRAL
     end
 
+    # Returns a hex color for EXPLAIN warning severity (:danger, :warning, :info)
+    def explain_severity_color(severity)
+      case severity&.to_sym
+      when :danger  then COLOR_LIGHT_RED
+      when :warning then COLOR_ORANGE
+      when :info    then "#90cdf4"
+      else               COLOR_ORANGE
+      end
+    end
+
     # Returns a readable hex text color for a numeric health score (0-100)
     def score_text_color(score)
       case score.to_i

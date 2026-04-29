@@ -67,6 +67,31 @@ class RailsVitalsExplainAnalyzerTest < ActiveSupport::TestCase
     end
   end
 
+  # ─── contains_function_calls? ──────────────────────────────────────────────
+
+  test ".contains_function_calls? returns false for standard aggregate functions" do
+    refute Analyzer.send(:contains_function_calls?, "SELECT COUNT(*) FROM posts")
+    refute Analyzer.send(:contains_function_calls?, "SELECT SUM(price) FROM orders")
+    refute Analyzer.send(:contains_function_calls?, "SELECT AVG(rating), MIN(rating), MAX(rating) FROM reviews")
+  end
+
+  test ".contains_function_calls? returns false for date and string functions" do
+    refute Analyzer.send(:contains_function_calls?, "SELECT NOW()")
+    refute Analyzer.send(:contains_function_calls?, "SELECT UPPER(name) FROM users")
+    refute Analyzer.send(:contains_function_calls?, "SELECT COALESCE(email, 'unknown') FROM users")
+  end
+
+  test ".contains_function_calls? returns true for unknown/custom functions" do
+    assert Analyzer.send(:contains_function_calls?, "SELECT my_custom_func(id) FROM users")
+    assert Analyzer.send(:contains_function_calls?, "SELECT pg_sleep(1)")
+    assert Analyzer.send(:contains_function_calls?, "SELECT count_orders(user_id) FROM users")
+  end
+
+  test ".contains_function_calls? returns false for plain column queries" do
+    refute Analyzer.send(:contains_function_calls?, "SELECT * FROM posts WHERE id = 1")
+    refute Analyzer.send(:contains_function_calls?, "SELECT name, email FROM users ORDER BY name")
+  end
+
   # ─── analyze — success path ─────────────────────────────────────────────────
 
   test ".analyze returns Result with PlanNode plan populated fields and no error when DB returns valid JSON plan" do

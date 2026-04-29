@@ -39,7 +39,14 @@ module RailsVitals
           return missing_sql_response if sql.nil? || sql.strip.empty?
           return rejected_sql_response(sql) if dml_present?(sql)
 
-          result = Analyzers::ExplainAnalyzer.analyze(sql.strip)
+          cleaned_sql = sql.strip
+
+          cost_estimate = Analyzers::ExplainAnalyzer.dry_run(cleaned_sql)
+          if cost_estimate.error
+            return error_response("Cost estimate failed: #{cost_estimate.error}")
+          end
+
+          result = Analyzers::ExplainAnalyzer.analyze(cleaned_sql)
 
           return error_response(result.error) if result.error
 
@@ -48,6 +55,11 @@ module RailsVitals
             total_cost: result.total_cost,
             actual_time_ms: result.actual_time_ms,
             rows_examined: result.rows_examined,
+            cost_estimate: {
+              total_cost: cost_estimate.total_cost,
+              note: "Cost estimate from dry-run EXPLAIN (ANALYZE was not executed for this estimate)"
+            },
+            function_calls: result.function_calls,
             warnings: serialize_warnings(result.warnings),
             suggestions: serialize_suggestions(result.suggestions),
             interpretation: result.interpretation

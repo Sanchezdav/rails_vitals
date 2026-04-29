@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.2] — 2026-04-28
+
+### Security
+
+#### 🛡 EXPLAIN Visualizer — Read-Only Transaction Safety
+
+##### Read-only transaction wrapping
+
+`ExplainAnalyzer.analyze` now wraps `EXPLAIN (ANALYZE true)` in a `BEGIN` / `SET TRANSACTION READ ONLY` / `COMMIT` block on PostgreSQL. This prevents any write side-effects from SELECT queries that call mutating functions. On SQLite (test/dev) the query runs directly since SQLite's locking model already prevents concurrent writes.
+
+##### Function-call detection
+
+Added `contains_function_calls?` detection in the EXPLAIN pipeline. When a query contains function calls (e.g. `NOW()`, custom functions), a warning is added to the EXPLAIN result and the interpretation mentions the read-only transaction safeguard.
+
+##### Dry-run cost estimate (circuit breaker)
+
+Added `ExplainAnalyzer.dry_run` — runs `EXPLAIN (ANALYZE false)` to produce a cost estimate without executing the query. The MCP `railsvitals_explain_query` tool now calls `dry_run` first, includes the cost estimate in its response, and only proceeds to the full `ANALYZE true` if the dry-run succeeds. This provides a circuit breaker: if the query has structural errors, the user sees the cost estimate failure before any ANALYZE execution.
+
+### Fixed
+
+- **Function-call detection no longer flags standard SQL aggregates** (`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `NOW`, `COALESCE`, and 30+ other built-in functions). Added `ALLOWED_FUNCTIONS` list with negative lookahead in the detection regex so only custom/unknown function calls produce a warning. Previously `SELECT COUNT(*)` was incorrectly flagged as having function calls.
+- **Empty warning panel in EXPLAIN Visualizer**: Added `when :function_call` case to the warnings view template with a "Function Call Detected" title and description. Added `:info` severity color (`#90cdf4`, blue) so info-level warnings render correctly instead of defaulting to amber. Previously the `:function_call` warning type had no matching template clause, causing a visible "Warnings (1)" badge with no rendered content below it.
+
+---
+
 ## [0.6.1] — 2026-04-28
 
 ### Security

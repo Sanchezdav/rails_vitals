@@ -10,7 +10,14 @@ module RailsVitals
       COLOR_NEUTRAL = "#a0aec0"
       COLOR_COOL = "#76e4f7"
 
-      # Node types and their risk/education metadata
+      # ─── Result / PlanNode structs ────────────────────────────────────────────────
+
+      Result = Struct.new(
+        :sql, :plan, :warnings, :suggestions,
+        :total_cost, :actual_time_ms, :rows_examined,
+        :interpretation, :error, :function_calls, :dry_run_result,
+        keyword_init: true
+      )
       NODE_METADATA = {
         "Seq Scan" => {
           risk: :danger,
@@ -114,12 +121,7 @@ module RailsVitals
         }
       }.freeze
 
-      Result = Struct.new(
-        :sql, :plan, :warnings, :suggestions,
-        :total_cost, :actual_time_ms, :rows_examined,
-        :interpretation, :error,
-        keyword_init: true
-      )
+      # ─── Safe SQL analysis ───────────────────────────────────────────────────────
 
       PlanNode = Struct.new(
         :node_type, :relation, :alias_name,
@@ -132,15 +134,34 @@ module RailsVitals
         keyword_init: true
       )
 
+      ALLOWED_FUNCTIONS = %w[
+        COUNT SUM AVG MIN MAX
+        COALESCE NULLIF
+        NOW CURRENT_TIMESTAMP CURRENT_DATE CURRENT_TIME LOCALTIMESTAMP LOCALTIME
+        EXTRACT DATE_PART DATE_TRUNC AGE
+        UPPER LOWER TRIM LENGTH SUBSTRING CONCAT REPLACE POSITION REVERSE
+        ROUND FLOOR CEIL ABS MOD POWER SQRT
+        GREATEST LEAST CAST
+        ROW_NUMBER RANK DENSE_RANK LAG LEAD FIRST_VALUE LAST_VALUE NTILE
+        ARRAY_AGG STRING_AGG
+        JSON_EXTRACT_PATH_TEXT JSONB_EXTRACT_PATH
+      ].freeze
+
+      FUNCTION_CALL_PATTERN = /\b(?!#{ALLOWED_FUNCTIONS.join('|')}\b)[a-zA-Z_]\w*\s*\(/
+
       def self.analyze(sql, binds: [])
         return unsupported_env unless supported_environment?
         return unsupported_sql unless select_query?(sql)
 
         safe_sql = substitute_binds(sql, binds)
+        has_function_calls = contains_function_calls?(safe_sql)
 
-        raw = ActiveRecord::Base.connection.execute(
+        dry_run_result = dry_run(safe_sql)
+        return dry_run_result if dry_run_result.error
+
+        raw = exec_in_read_only_transaction(
           "EXPLAIN (FORMAT JSON, ANALYZE true, BUFFERS false) #{safe_sql}"
-        ).first["QUERY PLAN"]
+        )
 
         plan_json = JSON.parse(raw)
         root_plan = plan_json.first["Plan"]
@@ -150,6 +171,14 @@ module RailsVitals
         warnings = extract_warnings(root_node)
         suggestions = build_suggestions(warnings, root_node)
 
+        if has_function_calls
+          warnings << {
+            type: :function_call,
+            severity: :info,
+            message: "Query contains function calls — executed inside a read-only transaction that prevents writes"
+          }
+        end
+
         result = Result.new(
           sql: safe_sql,
           plan: root_node,
@@ -158,11 +187,35 @@ module RailsVitals
           total_cost: root_plan["Total Cost"]&.round(2),
           actual_time_ms: exec_time,
           rows_examined: count_rows_examined(root_plan),
+          function_calls: has_function_calls,
+          dry_run_result: dry_run_result,
           error: nil
         )
 
         result.interpretation = interpret(result)
         result
+      rescue => e
+        Result.new(error: e.message, sql: sql, plan: nil,
+                   warnings: [], suggestions: [], total_cost: nil,
+                   actual_time_ms: nil, rows_examined: nil)
+      end
+
+      def self.dry_run(sql, binds: [])
+        safe_sql = substitute_binds(sql, binds)
+
+        raw = exec_in_read_only_transaction(
+          "EXPLAIN (FORMAT JSON, ANALYZE false, BUFFERS false) #{safe_sql}"
+        )
+
+        plan_json = JSON.parse(raw)
+        root_plan = plan_json.first["Plan"]
+
+        Result.new(
+          sql: safe_sql,
+          total_cost: root_plan["Total Cost"]&.round(2),
+          plan: build_node(root_plan),
+          error: nil
+        )
       rescue => e
         Result.new(error: e.message, sql: sql, plan: nil,
                    warnings: [], suggestions: [], total_cost: nil,
@@ -177,6 +230,35 @@ module RailsVitals
 
       def self.select_query?(sql)
         sql.strip.match?(/\ASELECT/i)
+      end
+
+      def self.contains_function_calls?(sql)
+        clean = sql.gsub(/'.*?(?:''|')/, "").gsub(/".*?"/, "")
+        clean.match?(FUNCTION_CALL_PATTERN)
+      end
+
+      def self.exec_in_read_only_transaction(sql)
+        if postgresql?
+          connection = ActiveRecord::Base.connection
+          connection.execute("BEGIN")
+          connection.execute("SET TRANSACTION READ ONLY")
+          begin
+            result = connection.execute(sql)
+            connection.execute("COMMIT")
+            result.first["QUERY PLAN"]
+          rescue => e
+            connection.execute("ROLLBACK") rescue nil
+            raise e
+          end
+        else
+          ActiveRecord::Base.connection.execute(sql).first["QUERY PLAN"]
+        end
+      end
+
+      def self.postgresql?
+        ActiveRecord::Base.connection.adapter_name.match?(/postgresql/i)
+      rescue
+        false
       end
 
       def self.substitute_binds(sql, binds)
@@ -332,6 +414,10 @@ module RailsVitals
 
         if result.warnings.any? { |w| w[:type] == :sequential_scan }
           parts << "Sequential scan detected — missing index is causing full table reads"
+        end
+
+        if result.function_calls
+          parts << "Query uses function calls — executed in a read-only transaction that prevents writes"
         end
 
         if result.actual_time_ms.to_f > 100

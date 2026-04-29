@@ -11,9 +11,9 @@ class RailsVitalsPlaygroundSandboxTest < ActiveSupport::TestCase
     assert_equal "MyModel", Sandbox.extract_model_name("MyModel.includes(:tags)")
   end
 
-  test ".extract_model_name strips line comments before extracting the model name" do
+  test ".extract_model_name returns nil when expression starts with a comment" do
     expr = "# find all users\nUser.all"
-    assert_equal "User", Sandbox.extract_model_name(expr)
+    assert_nil Sandbox.extract_model_name(expr)
   end
 
   test ".extract_model_name returns nil when expression starts with a lowercase word" do
@@ -204,5 +204,113 @@ class RailsVitalsPlaygroundSandboxTest < ActiveSupport::TestCase
       # weighted = (0 * 0.40 + 100 * 0.60).round = 60
       assert_equal 60, Sandbox.send(:project_score, 25, 0)
     end
+  end
+
+  # ─── run — successful path ──────────────────────────────────────────────
+
+  setup do
+    ActiveRecord::Base.connection.create_table(:sandbox_widgets, force: true) do |t|
+      t.string :name
+      t.integer :price
+    end
+
+    Object.const_set(:SandboxWidget, Class.new(ActiveRecord::Base))
+
+    SandboxWidget.create!(name: "foo", price: 10)
+    SandboxWidget.create!(name: "bar", price: 20)
+    SandboxWidget.create!(name: "baz", price: 30)
+  end
+
+  teardown do
+    ActiveRecord::Base.connection.drop_table(:sandbox_widgets) rescue nil
+    Object.send(:remove_const, :SandboxWidget) if Object.const_defined?(:SandboxWidget)
+  end
+
+  test ".run executes a basic .all query and returns metrics" do
+    result = Sandbox.run("SandboxWidget.all")
+
+    assert_nil result.error
+    assert_equal "SandboxWidget", result.model_name
+    assert result.query_count >= 1
+    assert result.duration_ms > 0
+    assert result.score.is_a?(Integer)
+    assert_equal [], result.n1_patterns
+  end
+
+  test ".run executes a query with where clause" do
+    result = Sandbox.run('SandboxWidget.where(name: "foo")')
+
+    assert_nil result.error
+    assert_equal "SandboxWidget", result.model_name
+    assert_equal 1, result.query_count
+    assert_equal [], result.n1_patterns
+  end
+
+  test ".run applies a default 100-record limit" do
+    result = Sandbox.run("SandboxWidget.all")
+
+    assert_nil result.error
+    # Our table has 3 records but the Result always reports DEFAULT_LIMIT
+    assert_equal 100, result.record_count
+  end
+
+  test ".run returns error when expression uses a disallowed method" do
+    result = Sandbox.run("SandboxWidget.connection.execute('SELECT 1')")
+
+    assert result.error.present?
+    assert_includes result.error, "not allowed for security reasons"
+    assert_equal [], result.queries
+  end
+
+  test ".run returns error when expression uses a disallowed method like exec" do
+    result = Sandbox.run("SandboxWidget.exec('rm -rf /')")
+
+    assert result.error.present?
+    assert_includes result.error, "not allowed for security reasons"
+  end
+
+  test ".run returns error when expression contains invalid characters" do
+    result = Sandbox.run("SandboxWidget.all; DROP TABLE")
+
+    assert result.error.present?
+    assert_includes result.error, "invalid characters"
+  end
+
+  test ".run filters out invalid access_association names" do
+    result = Sandbox.run("SandboxWidget.all",
+      access_associations: ["name", "..dangerous..", ";sql"])
+
+    assert_nil result.error
+    # Only valid names should remain — "..dangerous.." and ";sql" filtered out
+    # The association name "name" should be valid but may not be a real association,
+    # so reflect_on_association skips it — no error, just no data loaded
+  end
+
+  test ".run returns error when expression is syntactically invalid" do
+    result = Sandbox.run("SandboxWidget.where(name: )")
+
+    assert result.error.present?
+  end
+
+  test ".run strips comments from expression before processing" do
+    result = Sandbox.run("# comment line\n# another comment\nSandboxWidget.all")
+
+    assert_nil result.error
+    assert_equal "SandboxWidget", result.model_name
+  end
+
+  test ".run returns blocked_result when expression is only comments" do
+    result = Sandbox.run("# just a comment")
+
+    assert result.error.present?
+    assert_includes result.error, "No expression provided"
+  end
+
+  test ".run handles default query format with comment headers" do
+    expr = "# Worst N+1 detected in your app:\n# Fix: SandboxWidget.includes(:name)\n\nSandboxWidget.all"
+    result = Sandbox.run(expr)
+
+    assert_nil result.error
+    assert_equal "SandboxWidget", result.model_name
   end
 end

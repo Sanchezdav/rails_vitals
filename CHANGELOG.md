@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.1] — 2026-04-28
+
+### Security
+
+#### 🛡 Playground Sandbox — Code Injection Fixes
+
+##### Replaced `eval` with safe AR chain builder
+
+The Playground's `Sandbox.run` previously used Ruby `eval(chain_str, sandbox_binding)` to evaluate user-supplied ActiveRecord expressions. This was a critical code-injection vector: the `BLOCKED_PATTERNS` regex blocklist was trivially bypassable (e.g. word-boundary checks like `\bdrop\b` miss `drop_table`, and `connection.execute("SELECT 1")` contained no blocked keywords at all).
+
+Replaced with `SafeChainBuilder` (`lib/rails_vitals/playground/safe_chain_builder.rb`), a recursive-descent parser that:
+- Whitelists only 26 known safe AR methods (`all`, `where`, `select`, `includes`, etc.)
+- Parses method chains and arguments without any `eval` call
+- Rejects method calls not in the whitelist with a clear error message
+- Maintains full support for symbols, strings (single/double-quoted with escapes), integers, floats, booleans, nil, arrays, and keyword/rocket hashes
+
+##### Added `DISALLOWED_CLASS_METHODS` guard
+
+Added an explicit blocklist of 17 dangerous class-level methods (`connection`, `execute`, `exec`, `system`, `eval`, `send`, `public_send`, `__send__`, `instance_eval`, `class_eval`, `module_eval`, `define_method`, `method_missing`, `delete`, `destroy`, `delete_all`, `destroy_all`, `update_all`). These produce a distinct security-focused error message rather than a generic "not allowed" response.
+
+##### Added expression character validation
+
+Expressions are validated against `SAFE_EXPRESSION_PATTERN` before any processing. Control characters, null bytes, semicolons, `$`, and exotic Unicode are rejected early, independent of the method-level whitelist.
+
+##### Added association name validation
+
+The `access_associations` parameter (used for N+1 simulation) is filtered through `ASSOCIATION_NAME_PATTERN`, silently dropping any name that doesn't match `[a-zA-Z_][a-zA-Z0-9_]*`.
+
+##### Comment handling fix
+
+Expressions with comment lines (e.g. the default query format `# Worst N+1...\nPost.all`) now have comments stripped before reaching the chain builder. Previously comments were stripped only in `extract_model_name`, causing `build_relation` to receive the raw comments which the parser couldn't handle.
+
+##### Removed dead code
+
+Removed unused `ALLOWED_METHODS` constant from `Sandbox` (superseded by `SafeChainBuilder::ALLOWED_METHODS`).
+
+##### Test coverage added
+
+- 37 new tests for `SafeChainBuilder` covering argument parsing, chain building, error cases, and disallowed-method rejection
+- 10 new tests for `Sandbox.run` covering the successful execution path (previously untested), comment handling, invalid character rejection, and disallowed method rejection
+
+---
+
 ## [0.6.0] — 2026-04-27
 
 ### Added

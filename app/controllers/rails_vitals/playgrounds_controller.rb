@@ -13,7 +13,7 @@ module RailsVitals
       access_associations = Array(params[:access_associations]).reject(&:blank?)
 
       result = Playground::Sandbox.run(
-        expression,
+        clean_expr,
         access_associations: access_associations
       )
 

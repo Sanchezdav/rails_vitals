@@ -13,8 +13,8 @@ module RailsVitals
         true
       when :basic
         authenticate_or_request_with_http_basic("RailsVitals") do |username, password|
-          username == RailsVitals.config.basic_auth_username &&
-            password == RailsVitals.config.basic_auth_password
+          ActiveSupport::SecurityUtils.secure_compare(username, RailsVitals.config.basic_auth_username.to_s) &
+            ActiveSupport::SecurityUtils.secure_compare(password, RailsVitals.config.basic_auth_password.to_s)
         end
       when Proc
         unless auth.call(self)

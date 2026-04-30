@@ -10,6 +10,26 @@ module RailsVitals
     def create
       expression = params[:expression].to_s.strip
       clean_expr = clean_expression(expression)
+
+      unless params[:confirmed] == "1"
+        @expression = clean_expr
+        @result = Playground::Sandbox::Result.new(
+          error: "Please confirm that you understand this runs real queries",
+          queries: [], query_count: 0, duration_ms: 0,
+          model_name: nil, record_count: 0, score: nil, n1_patterns: []
+        )
+        model_name = Playground::Sandbox.extract_model_name(clean_expr)
+        if model_name
+          @available_assocs = associations_for_model(model_name)
+          @prechecked_assocs = Array(params[:access_associations]).reject(&:blank?)
+        else
+          build_index_data
+        end
+
+        render :index
+        return
+      end
+
       access_associations = Array(params[:access_associations]).reject(&:blank?)
 
       result = Playground::Sandbox.run(
@@ -17,7 +37,7 @@ module RailsVitals
         access_associations: access_associations
       )
 
-      model_name = Playground::Sandbox.extract_model_name(expression)
+      model_name = Playground::Sandbox.extract_model_name(clean_expr)
       @available_assocs = associations_for_model(model_name)
       @prechecked_assocs = access_associations
 
@@ -115,6 +135,13 @@ module RailsVitals
           dna:   Analyzers::SqlTokenizer.tokenize(q[:sql], all_queries: queries)
         }
       end
+    end
+
+    def build_index_data
+      @default_query = default_query
+      @default_model = default_model_name
+      @available_assocs = associations_for_model(@default_model)
+      @prechecked_assocs = prechecked_associations
     end
   end
 end

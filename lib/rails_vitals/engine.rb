@@ -21,6 +21,11 @@ module RailsVitals
                 "Permitted: #{RailsVitals::Configuration::PERMITTED_ENVIRONMENTS.join(', ')}"
         end
 
+        token = RailsVitals.config.mcp_auth_token
+        if token.blank? || token.length < 16
+          raise "RailsVitals MCP requires mcp_auth_token to be at least 16 characters"
+        end
+
         require "rails_vitals/mcp/auth"
         require "rails_vitals/mcp/response_builder"
         require "rails_vitals/mcp/tool_registry"

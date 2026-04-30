@@ -57,6 +57,18 @@
       Queries run against real data with a 100-record cap and 2s timeout.
     </div>
 
+    <label class="flex items-center gap-8 mb-16" style="cursor:pointer;font-size:13px;color:#a0aec0;">
+      <% if params[:confirmed] %>
+        <input type="checkbox" name="confirmed" value="1"
+               style="accent-color:#68d391;width:16px;height:16px;"
+               checked>
+      <% else %>
+        <input type="checkbox" name="confirmed" value="1"
+               style="accent-color:#68d391;width:16px;height:16px;">
+      <% end %>
+      I understand this runs real queries against my database
+    </label>
+
     <button type="submit" class="run-btn" id="run-btn">▶ Run</button>
   <% end %>
 </div>

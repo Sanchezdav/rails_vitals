@@ -39,23 +39,35 @@ class RailsVitalsPlaygroundsControllerTest < ActionDispatch::IntegrationTest
       sandbox_result
     end
 
-    with_stub(RailsVitals::Playground::Sandbox, :run, run_stub) do
-      with_stub(RailsVitals::Playground::Sandbox, :extract_model_name, "User") do
-        with_stub(RailsVitals::Playground::Sandbox, :associations_for, [ "posts" ]) do
-          post "/rails_vitals/playgrounds", params: {
-            expression: "User.includes(:posts)",
-            access_associations: [ "posts", "" ]
-          }
+        with_stub(RailsVitals::Playground::Sandbox, :run, run_stub) do
+          with_stub(RailsVitals::Playground::Sandbox, :extract_model_name, "User") do
+            with_stub(RailsVitals::Playground::Sandbox, :associations_for, [ "posts" ]) do
+              post "/rails_vitals/playgrounds", params: {
+                expression: "User.includes(:posts)",
+                access_associations: [ "posts", "" ],
+                confirmed: "1"
+              }
 
-          assert_response :success
-          assert_includes response.body, "Execution error: invalid expression"
+              assert_response :success
+              assert_includes response.body, "Execution error: invalid expression"
+            end
+          end
+        end
+
+        assert_equal(
+          { expression: "User.includes(:posts)", access_associations: [ "posts" ] },
+          captured_call
+        )
+      end
+
+      test "POST /rails_vitals/playgrounds rejects request without confirmation checkbox" do
+        with_stub(RailsVitals, :store, StoreDouble.new([])) do
+          with_stub(RailsVitals::Analyzers::AssociationMapper, :discover_models, []) do
+            post "/rails_vitals/playgrounds", params: { expression: "User.all" }
+
+            assert_response :success
+            assert_includes response.body, "Please confirm"
+          end
         end
       end
-    end
-
-    assert_equal(
-      { expression: "User.includes(:posts)", access_associations: [ "posts" ] },
-      captured_call
-    )
-  end
 end

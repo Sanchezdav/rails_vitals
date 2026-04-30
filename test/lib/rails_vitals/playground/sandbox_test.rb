@@ -258,7 +258,7 @@ class RailsVitalsPlaygroundSandboxTest < ActiveSupport::TestCase
     result = Sandbox.run("SandboxWidget.connection.execute('SELECT 1')")
 
     assert result.error.present?
-    assert_includes result.error, "not allowed for security reasons"
+    assert_includes result.error, "blocked operation"
     assert_equal [], result.queries
   end
 
@@ -266,7 +266,7 @@ class RailsVitalsPlaygroundSandboxTest < ActiveSupport::TestCase
     result = Sandbox.run("SandboxWidget.exec('rm -rf /')")
 
     assert result.error.present?
-    assert_includes result.error, "not allowed for security reasons"
+    assert_includes result.error, "blocked operation"
   end
 
   test ".run returns error when expression contains invalid characters" do

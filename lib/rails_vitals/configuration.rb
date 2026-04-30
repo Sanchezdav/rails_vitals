@@ -15,8 +15,10 @@ module RailsVitals
                   :mcp_max_log_size,
                   :mcp_slow_query_threshold_ms
 
+    PERMITTED_ENVIRONMENTS = %w[development test].freeze
+
     def initialize
-      @enabled                  = defined?(Rails) && !Rails.env.production?
+      @enabled                  = defined?(Rails) && permitted_environment?
       @store_size               = 200
       @store_enabled            = true
       @auth                     = :none
@@ -32,6 +34,10 @@ module RailsVitals
       @mcp_auth_token              = nil
       @mcp_max_log_size            = 100
       @mcp_slow_query_threshold_ms = 100
+    end
+
+    def permitted_environment?
+      PERMITTED_ENVIRONMENTS.include?(Rails.env.to_s)
     end
   end
 end

@@ -13,11 +13,12 @@ module RailsVitals
     private
 
     def verify_environment
-      if Rails.env.production?
+      unless RailsVitals.config.permitted_environment?
         render json: ResponseBuilder.error(
           nil,
           ResponseBuilder::AUTH_ERROR,
-          "RailsVitals MCP is not available in production"
+          "RailsVitals MCP is not available in this environment. " \
+          "Permitted: #{RailsVitals::Configuration::PERMITTED_ENVIRONMENTS.join(', ')}"
         ), status: :forbidden
       end
     end

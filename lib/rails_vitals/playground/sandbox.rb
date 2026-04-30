@@ -4,7 +4,14 @@ module RailsVitals
       BLOCKED_PATTERNS = [
         /\b(insert|update|delete|destroy|drop|truncate|create|alter)\b/i,
         /\.save/i, /\.save!/i, /\.update/i, /\.delete/i,
-        /\.destroy/i, /`/
+        /\.destroy/i, /`/,
+        /\.connection\b/i, /\.execute\b/i, /\.exec\b/i,
+        /\.send\b/i, /\.public_send\b/i, /\.__send__\b/i,
+        /\.send_data\b/i, /\.open\b/i,
+        /\.instance_eval\b/i, /\.class_eval\b/i, /\.module_eval\b/i,
+        /\.define_method\b/i, /\.method_missing\b/i,
+        /\bsystem\b/i, /\beval\b/i, /\bfork\b/i, /\bspawn\b/i,
+        /\bIO\b/i, /\bFile\b/i, /\bThread\b/i, /\bProcess\b/i
       ].freeze
 
       SAFE_EXPRESSION_PATTERN = /\A[a-zA-Z0-9_\.\s\(\),:\[\]{}'"!?=<>|&*+\-\/\\%]+\z/

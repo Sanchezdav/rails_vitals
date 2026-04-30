@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.3] — 2026-04-30
+
+### Security
+
+#### 🛡 Playground Sandbox — Strengthened Blocklist
+
+Extended `BLOCKED_PATTERNS` with 25 additional method-call and keyword patterns: `.connection`, `.execute`, `.exec`, `.send`, `.public_send`, `.__send__`, `.send_data`, `.open`, `.instance_eval`, `.class_eval`, `.module_eval`, `.define_method`, `.method_missing`, `system`, `eval`, `fork`, `spawn`, `IO`, `File`, `Thread`, `Process`. These provide early rejection at the expression level before reaching `SafeChainBuilder`.
+
+#### 🗺 Environment Scoping — Hardcoded `PERMITTED_ENVIRONMENTS`
+
+Added `RailsVitals::Configuration::PERMITTED_ENVIRONMENTS` (`["development", "test"]`) — a frozen constant, not a config option, since the gem should never run outside non-production. Replaces the previous `!production` default and the old hardcoded `SUPPORTED_ENVIRONMENTS` in `ExplainAnalyzer`. Affects:
+
+- **Engine middleware & notifications**: Only load when `RailsVitals.config.permitted_environment?` returns true.
+- **MCP server**: Engine startup raises with a clear error if MCP is enabled outside permitted environments — message lists `development` and `test` explicitly.
+- **MCP controller**: Returns 403 with permitted environments listed instead of a generic "production only" message.
+- **EXPLAIN analyzer**: Removed hardcoded `SUPPORTED_ENVIRONMENTS` — now delegates to `Configuration::PERMITTED_ENVIRONMENTS`.
+
+---
+
 ## [0.6.2] — 2026-04-28
 
 ### Security

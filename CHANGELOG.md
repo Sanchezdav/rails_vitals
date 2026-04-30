@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.4] — 2026-04-30
+
+### Fixed
+
+- **Playground requires confirmation checkbox**: Added "I understand this runs real queries against my database" checkbox to the playground form. The `create` action returns an error if unchecked, preventing accidental query execution. The form preserves the checkbox state on re-render. (`playgrounds_controller.rb`, `playgrounds/index.html.erb`)
+
+### Security
+
+- **MCP token minimum length**: Engine startup now validates `mcp_auth_token` is at least 16 characters when MCP is enabled (`engine.rb`).
+- **Timing-safe Basic auth**: Replaced `==` string comparison with `ActiveSupport::SecurityUtils.secure_compare` for both username and password in HTTP Basic authentication (`application_controller.rb`).
+
+---
+
 ## [0.6.3] — 2026-04-30
 
 ### Security

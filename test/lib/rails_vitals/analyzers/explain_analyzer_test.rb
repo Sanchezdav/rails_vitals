@@ -49,7 +49,9 @@ class RailsVitalsExplainAnalyzerTest < ActiveSupport::TestCase
     with_stub(Rails, :env, "production") do
       result = Analyzer.analyze("SELECT * FROM users")
 
-      assert_equal "EXPLAIN is only available in development and test environments.", result.error
+      assert_includes result.error, "permitted environments"
+      assert_includes result.error, "development"
+      assert_includes result.error, "test"
       assert_nil result.plan
     end
   end

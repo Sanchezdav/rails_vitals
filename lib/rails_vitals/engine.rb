@@ -16,7 +16,10 @@ module RailsVitals
 
     initializer "rails_vitals.mcp" do
       if RailsVitals.config.mcp_enabled
-        raise "RailsVitals MCP cannot run in production" if Rails.env.production?
+        unless RailsVitals.config.permitted_environment?
+          raise "RailsVitals MCP cannot run in #{Rails.env} environment. " \
+                "Permitted: #{RailsVitals::Configuration::PERMITTED_ENVIRONMENTS.join(', ')}"
+        end
 
         require "rails_vitals/mcp/auth"
         require "rails_vitals/mcp/response_builder"

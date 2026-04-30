@@ -1,8 +1,6 @@
 module RailsVitals
   module Analyzers
     class ExplainAnalyzer
-      SUPPORTED_ENVIRONMENTS = %w[development test].freeze
-
       COLOR_DANGER = "#fc8181"
       COLOR_HEALTHY = "#68d391"
       COLOR_WARNING = "#f6ad55"
@@ -225,7 +223,7 @@ module RailsVitals
       private
 
       def self.supported_environment?
-        SUPPORTED_ENVIRONMENTS.include?(Rails.env.to_s)
+        RailsVitals.config&.permitted_environment? || false
       end
 
       def self.select_query?(sql)
@@ -393,7 +391,8 @@ module RailsVitals
 
       def self.unsupported_env
         Result.new(
-          error: "EXPLAIN is only available in development and test environments.",
+          error: "EXPLAIN is only available in permitted environments: " \
+                 "#{RailsVitals::Configuration::PERMITTED_ENVIRONMENTS.join(', ')}.",
           sql: nil, plan: nil, warnings: [], suggestions: [],
           total_cost: nil, actual_time_ms: nil, rows_examined: nil
         )
